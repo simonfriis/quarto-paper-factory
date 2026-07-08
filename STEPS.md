@@ -58,7 +58,16 @@ pass) it clears `manuscript/_freeze` so the final render re-executes rather than
 cached numbers. The bibliography is assembled deterministically by `scripts/python/merge_bib.py`
 (DOI-first dedup, citekey-collision hard-error, url stripping) rather than by LLM transcription.
 
-## Literature phase (pre-pipeline, M4)
+## Literature phase (pre-pipeline, interactive)
 
-Before Step 1a, the two-stage literature search produces `literature/literature_map.md`
-that Step 1a reads and builds on. See `CLAUDE.md`.
+Before Step 1a, run the two-stage literature search — it produces `literature/literature_map.md`,
+which Step 1a reads and builds on. Run each step explicitly (the autonomous pipeline skips them):
+
+| Step | Prompt | Deliverable(s) |
+|------|--------|----------------|
+| `litphase1` | litphase_1_prompts | `literature/deep_research_prompts.md` (for the human to run) |
+| `litphase2` | litphase_2_synthesize | `literature/research_brief.md` + `literature/seed_dois.md` |
+| `litphase3` | litphase_3_grove | `literature/literature_map.md` + `literature/seed.bib` (grove; optional) |
+
+`./run_prompts.sh --step litphase1` → run the Deep Research prompts, drop reports in
+`literature/reports/` → `--step litphase2` → `--step litphase3`. See `CLAUDE.md` for detail.
