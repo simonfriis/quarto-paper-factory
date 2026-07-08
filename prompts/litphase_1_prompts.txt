@@ -1,0 +1,21 @@
+You are setting up the BREADTH stage of a two-stage literature search for a social-science paper. Your job in THIS step is only to generate high-quality Deep Research prompts for the human to run — you do not do the search yourself.
+
+PROJECT DIRECTORY: __PROJECT_PATH__
+RESEARCH QUESTION: __RESEARCH_QUESTION__
+
+Read `project_brief.md` (and `.claude/references/domain-profile.md` if filled) for the question, framing, target journals, and field.
+
+Write `literature/deep_research_prompts.md` containing THREE ready-to-paste Deep Research prompts, each tailored to this project:
+
+1. **ChatGPT Deep Research — foundational + canonical.** Ask for the seminal works, the core theoretical traditions and debates, the canonical empirical papers, and the main measurement/identification approaches in this literature. Require, for every work named: authors, year, venue, and a DOI (or a stable identifier) — this matters, because the DOIs seed the deep search. Ask it to organize by debate/cluster, not as an undifferentiated list.
+
+2. **ChatGPT Deep Research — recent + frontier.** Ask specifically for work from the last ~3 years, preprints and working papers included, plus the most-cited recent contributions and any active controversies. Same citation requirements (authors, year, venue, DOI).
+
+3. **Claude — adversarial / positioning.** Ask for the strongest objections a skeptical reviewer at the target journal would raise, the closest competing explanations, the papers most likely to be cited AGAINST this argument, and where the contribution sits relative to them.
+
+Each prompt must embed this project's actual research question and framing (not a generic template), and must instruct the model to return DOIs. End `literature/deep_research_prompts.md` with a short INSTRUCTIONS section telling the human to:
+- run prompts 1–2 in ChatGPT Deep Research and prompt 3 in Claude,
+- save each returned report as its own markdown file under `literature/reports/` (e.g. `literature/reports/chatgpt_foundational.md`),
+- then run the synthesis step (`litphase2`).
+
+Do NOT perform any web search or write any other files in this step. Keep the prompts sharp and specific to this project.

@@ -38,17 +38,27 @@ See `STEPS.md` for the step list and each step's deliverable. Two hard gates: th
 **final-review reopen loop** (Step 11; a `VERDICT: REOPEN_STEP10*` line loops back to
 Step 10 up to 3×, then halts for human review rather than polishing unresolved work).
 
-## Two-stage literature search (wired in M4)
+## Two-stage literature search
 
-Before the pipeline runs, a literature phase produces `literature/literature_map.md`
-(which Step 1a builds on):
+Run this interactively BEFORE the autonomous pipeline; it produces
+`literature/literature_map.md`, which Step 1a builds on. The autonomous pipeline skips
+these steps (Step 1a searches from scratch if no map exists).
 
-1. **Breadth** — WebSearch plus human-provided ChatGPT / Claude Deep Research reports
-   (dropped into `literature/reports/`), synthesized into a research brief + seed DOIs.
-2. **Depth** — the external `grove` CLI seeds from those DOIs, expands the citation
-   graph (OpenAlex forward/backward), runs semantic + gap search, and exports a
-   verified `seed.bib`. Grove is a separate installed dependency; the depth pass is
-   optional. Use a project-scoped tag (`<project>_seed`) to avoid blending corpora.
+```bash
+./run_prompts.sh --step litphase1   # generate tailored Deep Research prompts
+#   run them in ChatGPT / Claude Deep Research; save each report under literature/reports/
+./run_prompts.sh --step litphase2   # synthesize the reports + WebSearch → research_brief + seed DOIs
+./run_prompts.sh --step litphase3   # (optional) deep search via grove
+```
+
+1. **Breadth (litphase1–2)** — WebSearch plus human-provided ChatGPT / Claude Deep Research
+   reports (dropped into `literature/reports/`), synthesized into `research_brief.md` + a seed
+   DOI table.
+2. **Depth (litphase3)** — the external `grove` CLI seeds from those DOIs (project-scoped tag
+   `<slug>_seed`), reconciles each DOI against OpenAlex (catching hallucinated citations),
+   expands the citation graph (forward/backward), runs semantic (`similar`) + gap search, and
+   exports a verified `seed.bib` → the deterministic bib merge. Grove is a separate installed
+   dependency; the depth pass is optional. Prereqs: `grove` on PATH, `OPENALEX_EMAIL` set.
 
 ## House style (essentials)
 

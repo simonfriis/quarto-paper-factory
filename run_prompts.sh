@@ -18,6 +18,12 @@ set -euo pipefail
 #   ./run_prompts.sh --dry-run --step <id>    Print the filled prompt; no model call
 #   ./run_prompts.sh --help
 #
+# Literature phase (interactive, run BEFORE the pipeline):
+#   ./run_prompts.sh --step litphase1 [dir]   Generate Deep Research prompts
+#     → run them; save each report under literature/reports/; then:
+#   ./run_prompts.sh --step litphase2 [dir]   Synthesize reports + WebSearch
+#   ./run_prompts.sh --step litphase3 [dir]   Deep search via grove (optional)
+#
 # Flags: --auto (no pause between steps) · --parallel (fan-out/dual concurrently)
 #        --skip-codex (route codex steps to Claude) · --dry-run
 #
@@ -41,6 +47,9 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC
 #   promptspec: prompt basename, or DUAL/EXT/LENS (special) ; engine: claude|codex|dual
 #   fanout: none|ext7|lens5|n5 ; gate: none|kill|reopen
 STEPS=(
+  "litphase1|litphase_1_prompts|claude|none|none"
+  "litphase2|litphase_2_synthesize|claude|none|none"
+  "litphase3|litphase_3_grove|claude|none|none"
   "1a|step1a_deep_research|codex|none|none"
   "1b|step1b_data_wrangle|claude|none|none"
   "1c|step1c_key_variables|claude|none|none"
@@ -107,6 +116,9 @@ _glob_count() {  # <prefix> <count> → 0 if ≥count files like <prefix>[1-9]*.
 step_check() {  # id → 0 if all expected deliverables present, else 1 (+ message)
   local id="$1" out="" f rc=0
   case "$id" in
+    litphase1) out="literature/deep_research_prompts.md" ;;
+    litphase2) out="literature/research_brief.md literature/seed_dois.md" ;;
+    litphase3) out="literature/literature_map.md literature/seed.bib" ;;
     1a) out="codex_research.md" ;;    1b) out="data_wrangle.md" ;;
     1c) out="key_variables.md" ;;     1d) out="viability_gate.md" ;;
     1e) out="descriptive_map.md" ;;   2)  out="findings_brief_claude.md findings_brief_codex.md" ;;
@@ -320,6 +332,10 @@ reopen_cycles=0
 i="$start"
 while [[ "$i" -lt "${#STEPS[@]}" ]]; do
   rec="${STEPS[$i]}"; id="$(step_field "$rec" 1)"; gate="$(step_field "$rec" 5)"
+  # The two-stage literature phase is interactive — run it explicitly via
+  # --step litphase1/2/3. The autonomous pipeline skips it (Step 1a builds on
+  # literature/literature_map.md if it exists, else searches from scratch).
+  if [[ "$id" == litphase* ]]; then i=$((i+1)); continue; fi
   # Resume: skip completed steps (unless --from forced a start point at/after here)
   if [[ "$MODE" == "run" && -f "$(marker "$id")" ]]; then
     echo -e "${YELLOW}✓ skip $id (done)${NC}"; i=$((i+1)); continue

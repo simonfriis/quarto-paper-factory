@@ -1,0 +1,18 @@
+You are doing the BREADTH synthesis of a two-stage literature search. The human has run the Deep Research prompts and saved the reports.
+
+PROJECT DIRECTORY: __PROJECT_PATH__
+RESEARCH QUESTION: __RESEARCH_QUESTION__
+
+INPUTS:
+- `project_brief.md` (and `.claude/references/domain-profile.md` if filled) for framing.
+- `literature/reports/*.md` — the pasted ChatGPT / Claude Deep Research reports. READ ALL of them. If `literature/reports/` is empty, STOP and tell the human to run `litphase1`, do the Deep Research, and drop the reports there first.
+
+DO:
+1. **Synthesize** the reports into `literature/research_brief.md`: the core debates and theoretical clusters, the seminal works, the recent/frontier works, the main measurement/identification approaches, the strongest objections, and where this paper's contribution sits. Organize around this paper's own argument, not by source report. Note disagreements between the reports.
+2. **Fill recency/verification gaps with WebSearch** (the scholarly allowlist is injected automatically): confirm a handful of the most load-bearing claims and catch anything from the last 1–2 years the reports missed. Do not try to re-do the whole search — the reports are the breadth pass.
+3. **Extract the seed set** into `literature/seed_dois.md` as a table: `DOI | Authors (Year) | Title | cluster | why it's a seed`. Include every work with a usable DOI from the reports and your WebSearch that is genuinely central (seminal, frontier, or a direct interlocutor). A DOI-first list is what feeds the deep (grove) search, so prioritize works that HAVE DOIs; list any key work without a DOI in a separate "no-DOI" section.
+4. **Flag verification concerns**: any DOI or citation you could not confirm, and any claim the reports asserted that WebSearch could not corroborate — list these under "## To verify" so the deep search reconciles them.
+
+Write `literature/research_brief.md` and `literature/seed_dois.md`. Then tell the human they can run the deep search (`litphase3`) to expand the seed set through grove, or proceed straight to the pipeline if a deep search is not needed for this project.
+
+Bibliography constraint: when you record citations anywhere, never include `url` fields — the house bibliography style crashes on them.

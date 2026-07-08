@@ -1,0 +1,37 @@
+You are doing the DEPTH stage of a two-stage literature search, using the external `grove` CLI (semantic search + OpenAlex forward/backward citation expansion). This stage is optional — run it when the project needs a deeper, citation-verified literature map than the breadth pass alone.
+
+PROJECT DIRECTORY: __PROJECT_PATH__
+RESEARCH QUESTION: __RESEARCH_QUESTION__
+
+PREREQUISITES (verify first; if missing, tell the human and stop):
+- `grove` is installed and on PATH (`grove --help`). If not, it is installed from the grove repo (`uv tool install <path-to-grove>` or run via `uv run grove`).
+- `OPENALEX_EMAIL` is set (grove uses the OpenAlex polite pool).
+- `literature/seed_dois.md` exists (from `litphase2`).
+
+Use a **project-scoped tag** so grove's shared database never blends this project's corpus with another's. Set `TAG` to `<slug>_seed`, where `<slug>` is the basename of the project directory (e.g. `wildchat_seed`). Use `--tag "$TAG"` on every tagging/reading command.
+
+WORKFLOW (run these as bash; read each command's compact output before the next):
+
+1. **Seed.** Extract the DOIs from `literature/seed_dois.md` and acquire them:
+   `grove acquire --doi <doi1> <doi2> … --tag "$TAG"`
+   (Or, if you have a `.bib`, `grove import-bibtex <file> --name "$TAG"`.)
+
+2. **Reconcile (Stage-2 verifies Stage-1).** For each seed DOI, compare the title grove resolved from OpenAlex against the title in `literature/seed_dois.md`. Report every DOI that failed to resolve or resolved to a different work — these are hallucinated or mis-transcribed citations from the breadth pass. Do NOT silently drop them; list them.
+
+3. **Expand the citation graph** (OpenAlex + Semantic Scholar, forward and backward):
+   `grove expand <id> <id> …`   (ids from `grove search --tag "$TAG" --format agent`)
+
+4. **Semantic neighbors** (the parallel-literature lens — recovers adjacent work the citation graph ranks low):
+   `grove index` then `grove similar --tag "$TAG" --k 30`
+
+5. **Corpus-coupling gaps** (works the seeds point toward but the library lacks):
+   `grove gaps --tag "$TAG" --by coupling`
+
+6. **Expand to saturation** (stop when a round adds nothing new):
+   `grove run start "deepen __RESEARCH_QUESTION__"`, then loop `grove expand-frontier --top-n 5` → `grove saturation` until saturation reports no new anchors (cap the loop at ~4 rounds).
+
+OUTPUTS:
+- `literature/seed.bib` — `grove bibtex --tag "$TAG" > literature/seed.bib` (OpenAlex-verified; no `url` fields). This feeds the deterministic bib merge (`scripts/python/merge_bib.py`).
+- `literature/literature_map.md` — a tiered, OpenAlex-verified map that grounds the pipeline: the core anchors, the foils/interlocutors, the clusters/debates, the frontier works, and the reconciliation results (which seeds resolved, which failed). This is what Step 1a reads and builds on.
+
+Treat `seed.bib` as grounding/verification input, not the final bibliography — grove's export omits volume/issue/pages, which the manuscript's bibliography fills in later.
