@@ -31,5 +31,8 @@ printf '# H\n\nSee `x <- 3.14`.\n<!-- note: 9.9 -->\nEquation $y = 2.5x$ holds.\
 printf '# H\n\nThe sample had 2,357 respondents and a mean of 4.2.\n' > "$WORK/big.qmd"
 [[ "$(run "$WORK/big.qmd")" == 1 ]] && ok "'2,357' and '4.2' flagged" || bad "large/decimal should flag"
 
+printf '# H\n\nSee Section 7. Model 3 wins; baseline 0.\n' > "$WORK/sentper.qmd"
+[[ "$(run "$WORK/sentper.qmd")" == 0 ]] && ok "integer + sentence period ('7.', '0.') allowed" || bad "sentence-period integer should pass"
+
 echo; echo "── PASS=$pass  FAIL=$fail ──"
 [[ "$fail" -eq 0 ]]

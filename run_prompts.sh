@@ -133,6 +133,19 @@ step_check() {  # id → 0 if all expected deliverables present, else 1 (+ messa
 kill_triggered()   { [[ -f viability_gate.md ]] && head -1 viability_gate.md | grep -q "^VERDICT: KILL"; }
 reopen_triggered() { [[ -f final_review.md   ]] && head -1 final_review.md   | grep -q "^VERDICT: REOPEN_STEP10"; }
 
+# Mechanical number gate (spec §5.4/§6.3): at the review/polish steps the RUNNER — not the
+# model — checks that no naked numeral slipped into manuscript prose. Loud + logged, never silent.
+number_gate() {
+  case "$1" in 8|11|15) ;; *) return 0 ;; esac
+  local lint="$FACTORY/scripts/python/lint_prose_numbers.py"
+  [[ -f "$lint" ]] && compgen -G "manuscript/*.qmd" >/dev/null || return 0
+  if python3 "$lint" manuscript/*.qmd; then
+    echo -e "${GREEN}✓ number-gate (step $1): no naked numerals in prose${NC}"
+  else
+    echo -e "${RED}⚠ number-gate (step $1): naked numerals in prose — convert to inline \`r stats\$…\$lab\` lookups (spec §6.3)${NC}"
+  fi
+}
+
 lens_text() {  # extract the LENS_N block from step4_architect_lenses.txt
   awk -v s="---LENS_${1}---" '$0==s{f=1;next} /^---/{f=0} f' "$PROMPTS_DIR/step4_architect_lenses.txt"
 }
@@ -233,6 +246,10 @@ run_step() {  # the full step record "id|spec|engine|fanout|gate"
       echo -e "${RED}✗ step $id incomplete — not marking done (re-run to resume)${NC}"; return 1
     fi
     touch "$(marker "$id")"
+    number_gate "$id"
+    # Clean-final-render guard (spec §5.4): after the last prose pass, invalidate the Quarto
+    # freeze cache so the final render re-executes and cannot serve stale numbers.
+    [[ "$id" == 15 ]] && rm -rf manuscript/_freeze 2>/dev/null
   fi
 }
 

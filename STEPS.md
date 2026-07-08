@@ -49,6 +49,15 @@ Fan-out steps (`4ext`, `4lens`, `4review`, and the dual Step 2) run concurrently
 and verifies the expected output **count** before marking done. A step whose deliverable
 is missing is not marked done — re-running resumes from there.
 
+## Mechanical number & bibliography gates
+
+After the review/polish steps (8, 11, 15) the **runner** — not the model — runs the naked-numeral
+lint (`scripts/python/lint_prose_numbers.py`) on `manuscript/*.qmd` and logs a loud PASS/FAIL, so a
+hardcoded number in prose can never pass silently (spec §5.4/§6.3). After Step 15 (the last prose
+pass) it clears `manuscript/_freeze` so the final render re-executes rather than serving stale
+cached numbers. The bibliography is assembled deterministically by `scripts/python/merge_bib.py`
+(DOI-first dedup, citekey-collision hard-error, url stripping) rather than by LLM transcription.
+
 ## Literature phase (pre-pipeline, M4)
 
 Before Step 1a, the two-stage literature search produces `literature/literature_map.md`

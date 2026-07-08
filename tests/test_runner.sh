@@ -52,6 +52,15 @@ reopen_triggered && bad "prose mention of REOPEN must NOT reopen" || ok "prose-o
 printf 'VERDICT: REOPEN_STEP10_ANALYSIS\n\n...\n' > final_review.md
 reopen_triggered && ok "line-1 REOPEN triggers"                  || bad "line-1 REOPEN should trigger"
 
+echo "5) number_gate — runner-executed prose check at review/polish steps"
+FACTORY="$ROOT"   # number_gate resolves the lint under $FACTORY
+mkdir -p manuscript
+printf '# H\n\nClean prose, Section 3.\n' > manuscript/a.qmd
+number_gate 15 2>&1 | grep -q '✓ number-gate' && ok "clean prose passes the gate" || bad "clean prose should pass the gate"
+printf '# H\n\nThe effect was 8.3%% here.\n' > manuscript/b.qmd
+number_gate 15 2>&1 | grep -q '⚠ number-gate' && ok "naked numeral warns at the gate" || bad "naked numeral should warn"
+number_gate 7  2>&1 | grep -q 'number-gate' && bad "step 7 must not be a gate step" || ok "non-gate step is a no-op"
+
 echo
 echo "── PASS=$pass  FAIL=$fail ──"
 [[ "$fail" -eq 0 ]]

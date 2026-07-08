@@ -104,8 +104,8 @@ def prose_violations(path: Path) -> list[tuple[int, str, str]]:
         line = INLINE_CODE.sub(" ", line)
         # Flag any surviving numeric literal that is not on the allowlist.
         for match in NUM.finditer(line):
-            # Drop a trailing thousands-comma the greedy match may swallow ("2024," -> "2024").
-            token = match.group().rstrip(",")
+            # Strip trailing sentence punctuation the greedy match swallows (e.g. "3." -> "3").
+            token = match.group().rstrip(",.")
             if not re.search(r"\d", token):
                 continue
             if is_allowed(token):
