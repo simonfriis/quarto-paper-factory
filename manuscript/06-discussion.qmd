@@ -1,0 +1,3 @@
+# Discussion {#sec-discussion}
+
+<!-- Discussion goes here (written at Step 7). -->

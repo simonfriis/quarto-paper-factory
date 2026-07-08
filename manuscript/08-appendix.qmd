@@ -1,0 +1,4 @@
+# Appendix {#sec-appendix}
+
+<!-- Appendix goes here (written at Step 7): robustness checks, supplementary
+     tables/figures, and background material kept out of the body. -->

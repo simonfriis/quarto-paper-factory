@@ -1,0 +1,48 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "Project Title"           # set per project (or written at Step 14)
+  # subtitle: "Optional subtitle"
+  author:
+    - name: "Author Name"          # Step 7 rewrites this from project_brief.md (## Author)
+      # affiliation: ""
+      # email: ""
+  date: today
+  # abstract: written last, by a fresh-eyes reader (Step 14) — see index.qmd
+  chapters:
+    - index.qmd
+    - 01-introduction.qmd
+    - 02-background.qmd
+    - 03-data.qmd
+    - 04-methods.qmd
+    - 05-results.qmd
+    - 06-discussion.qmd
+    - 07-conclusion.qmd
+    - 08-appendix.qmd
+    - references.qmd
+
+# keywords: [ ... ]                 # set per project
+# thanks: |                         # acknowledgments / grants / IRB approvals
+
+bibliography: references.bib
+csl: chicago-author-date.csl
+
+# Sequential float numbering ("Table 1", not "Table 1.1") — standard for journal
+# submission; the book default is chapter-prefixed numbering.
+crossref:
+  chapters: false
+
+execute:
+  freeze: auto
+  echo: false
+  warning: false
+  message: false
+
+format:
+  # M1 spine: plain HTML so the scaffold renders with quarto alone (no LaTeX/R
+  # extension). M3 replaces this with the house `florilegium-pdf` format (and the
+  # optional `asq-docx` / `asq-pdf` submission formats), installed via `make setup`.
+  html:
+    toc: true

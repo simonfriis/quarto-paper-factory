@@ -1,0 +1,5 @@
+# Results {#sec-results}
+
+<!-- Results go here (written at Step 7). Lead with the substantive finding, then
+     the statistical detail. Tables via modelsummary/tinytable; figures via ggplot
+     (captions in the chunk, never inside the plot). See .claude/rules/. -->

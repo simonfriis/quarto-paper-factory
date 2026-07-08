@@ -1,0 +1,4 @@
+# Background {#sec-background}
+
+<!-- Background / theory goes here (written at Step 7). Organize around the paper's
+     own argument, not by subfield — see .claude/rules/sociology-conventions.md. -->

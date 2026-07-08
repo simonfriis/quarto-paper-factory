@@ -1,0 +1,5 @@
+# Data {#sec-data}
+
+<!-- Data description goes here (written at Step 7). Add analysis via a setup chunk
+     that sources manuscript/_setup.R; report every number inline as `r stats$...$lab`
+     (no naked numerals — see .claude/rules/r-quarto-style.md and CLAUDE.md). -->

@@ -1,0 +1,4 @@
+# Introduction {#sec-introduction}
+
+<!-- Introduction goes here (written at Step 7). See CLAUDE.md for the chapter
+     setup-chunk pattern and .claude/rules/ for the writing and style conventions. -->
