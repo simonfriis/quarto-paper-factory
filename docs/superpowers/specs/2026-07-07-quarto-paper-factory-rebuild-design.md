@@ -1,7 +1,7 @@
 # Quarto-Native Paper Factory — Rebuild & Integration Design
 
 - **Date:** 2026-07-07
-- **Status:** Draft for review (rev. 2 — incorporates the Fable Oracle review: §5.4 mechanical-gates hardening, §7.4 grove hardening, and corrections C1–C16)
+- **Status:** Draft for review (rev. 3 — rev. 2 folded in the Fable Oracle review [§5.4/§7.4 hardening, corrections C1–C16]; rev. 3 replaces the ported `verify_numbers.py` diff with the §6.3 inline-number mandate + naked-numeral lint)
 - **Repo (home of this work):** `claude_paper_factory` (GitHub origin `simonfriis/quarto-paper-factory`), branch `feat/quarto-native-rebuild`
 - **Author:** Simon Friis (with Claude)
 
@@ -189,7 +189,7 @@ Rationale: the active pipeline never invokes them (§1.3). The paper-factory-ori
 
 The review corrected a false premise: **`scripts/verify_numbers.py` DOES exist** — in the stale `claude_paper_factory` base being rebuilt — where it is LaTeX/Stata-specific (expects `{base}_paper.tex`, Stata `.log` globs, `.tex` tables). It is the pipeline's **only mechanical number-verification tool**, and §4's "remove stale content" would delete it. The three "independent bugs" are one coherent vestige cluster driven by that script's placeholders. Corrected actions:
 
-1. **Port and rewrite `verify_numbers.py` for Quarto** — compare numbers in `manuscript/*.qmd` prose against `scripts/R/output/*.log` + rendered tables. Do **not** delete it. (§5.4 must-do 3 has the *runner*, not a model, execute it.)
+1. **Do NOT port `verify_numbers.py`'s approach.** It was a post-hoc diff of typed `.tex` numbers against Stata logs — the wrong tool for a dynamic Quarto document. In a Quarto-native factory every statistical number is an inline `r` lookup from a live results object (§6.3), so prose↔analysis divergence is *structurally impossible*; the residual mechanical gate is a naked-numeral **lint** (§5.4 must-do 3), not a diff. Salvage its number-extraction regexes for the lint if useful, then delete the script.
 2. **Delete `__BASE_NAME__`** — a LaTeX artifact (`{base}_paper.tex`); the Quarto book has no base-name. Occurs at `step7:4`, `step8:29`.
 3. **Delete `__FACTORY__`** — resolved by the instantiation decision (§11 M6: template copied wholesale → `__FACTORY__` ≡ `__PROJECT_PATH__`). Occurs in `step8`, `step14` (not step7). This auto-fixes step 14's broken abstract-examples path.
 4. **Add a residual-placeholder guard** to `fill_prompt()` (§5.4 must-do 4) so any future unfilled `__TOKEN__` aborts loudly.
@@ -202,7 +202,7 @@ The review corrected a false premise: **`scripts/verify_numbers.py` DOES exist**
 
 1. **Sentinel + fan-out count checks for every step.** Extend `step_output()` (currently only 1a–1e/3/4decide) to all 25 runner steps using the deliverables named in `STEPS.md`; for fan-outs verify the expected file *count* (`extension_brief_[1-7].md`, `paper_map_[1-5].md`, `paper_map_review_[1-5].md`) before touching the `.done` marker; collect child PIDs and `wait $pid` individually in `--parallel` so failures propagate. (Kills the largest silent-failure class.)
 2. **Anchored, line-1-only verdict parsing.** `head -1 | grep -q '^VERDICT: KILL'` (1d) and `'^VERDICT: REOPEN_STEP10'` (11); each gate step deletes its own prior output before writing (defeats stale-verdict carryover); on `MAX_REOPEN` exhaustion **halt for human review** rather than continuing into steps 12–15.
-3. **Quarto-native `verify_numbers.py` executed by the runner** at steps 8, 11, and **after step 15** (derobotification can silently alter numbers in prose), with the report attached to the step log. Also run it on `findings_brief.md` vs `scripts/R/output/*.log` to catch step-3 number hallucination at the source.
+3. **Enforce the inline-number mandate mechanically (§6.3), not a prose-vs-log diff.** (a) A **naked-numeral lint** scans `manuscript/*.qmd` prose (outside code chunks and inline `` `r …` `` spans); any disallowed numeric literal fails the build (allowlist: years, IRB/dataset IDs, footnote/enumeration markers, spelled or round rhetorical numbers). This makes prose↔analysis drift *impossible* rather than detecting it after the fact — and replaces `verify_numbers.py` entirely. (b) A **clean-final-render guard** so inline values can't be served stale from a `freeze:`/cache — the final render (after step 15, which can silently alter prose) re-executes or verifies freeze freshness. Both run in the runner at steps 8, 11, and after 15. *Not closed by this:* a valid-but-wrong object reference (`stats$wrong$path`) — a live but wrong number, caught only by human/critic review (no diff script catches it either). *Lighter optional guard:* spot-check headline numbers in the intermediate `findings_brief.md` against `scripts/R/output/*.log`, since the model reasons from them (the step-3 bottleneck) even though final printed numbers are recomputed inline.
 4. **Residual-placeholder guard in `fill_prompt()`:** after substitution, `grep -qE '__[A-Z_]+__'` → abort naming the offending token.
 5. **Deterministic bibliography pipeline:** one script merges `codex_references.bib` + `argument_references.bib` + `seed.bib` → `manuscript/references.bib` with DOI-first dedup (fallback normalized title+year), **key-collision detection** (same key → different work = hard error), url-field stripping, and a check that every `@key` cited in `manuscript/*.qmd` resolves. Replaces three LLM-transcription hops (the current corruption vector); step 12 then only verifies existence.
 
@@ -232,6 +232,14 @@ The review corrected a false premise: **`scripts/verify_numbers.py` DOES exist**
 - Retire `cc_moral_economy`'s `r-style-general.md` / `r-style-notebooks.md` (superseded).
 - Keep the writing-layer rules/references; add explicit pointers to `prose-craft.md` in the writing prompts (steps 7, 9, 10, 15) so it is actually consumed (it was previously only referenced by the dormant agents).
 - Wire the lint gate into the `Makefile` (`lint`, `check` targets).
+
+### 6.3 Numbers-in-prose mandate (dynamic-document discipline)
+
+The template makes explicit what both style sources only imply. `claude-style-kit`'s `r-quarto-style.md:174–231` specifies *how* to build inline values (one nested `stats` object; prose indexes-and-formats only; pre-formatted `*_lab` fields) but scopes itself to code + inline values, *not* prose (`:11–12`). `cc_moral_economy`'s `r-style-notebooks.md:64` says only "Inline R code for statistics so numbers update automatically." Neither is a hard rule. The template adds one:
+
+> **Every statistical number in manuscript prose is an inline `` `r stats$…$lab` `` lookup from a live results object. No naked numeric literals in prose** (allowlist: years, IRB/dataset IDs, footnote/enumeration markers, spelled or round rhetorical numbers). Numbers in tables/figures come from `modelsummary`/`tinytable`/ggplot objects — never typed.
+
+This is the primary defense against prose numbers diverging from the analysis; it is enforced by the §5.4 naked-numeral lint and the clean-final-render guard, and it replaces the LaTeX-era `verify_numbers.py` diff entirely. It does not, by itself, catch a valid-but-wrong object reference (§5.4).
 
 ---
 
@@ -360,7 +368,7 @@ Milestones map to sub-projects A→E→validation. B, C, D develop against the M
 - **Florilegium render:** a canonical figure (via `theme_florilegium()`) and a `modelsummary`/`tinytable` regression table (with `notes=`) render correctly (SE grouping active) in the florilegium PDF.
 - **Lit phase dry-run:** toy `project_brief.md` → Stage-1 synthesis → Stage-2 grove seed/expand/similar/gaps → `literature_map.md` + `seed.bib`. Requires a reachable grove install + DB.
 - **Grove regression:** `grove` test suite green after the `feat/bibtex-import` merge.
-- **Mechanical gates (§5.4):** unit-test the runner's sentinel/count checks, anchored verdict parsing, `fill_prompt()` placeholder guard, `verify_numbers.py`, and the bib-merge script against fixtures (killed-verdict-on-line-4, partial fan-out, unfilled placeholder, number mismatch, duplicate bib key) — each must fail loudly, not pass silently.
+- **Mechanical gates (§5.4):** unit-test the runner's sentinel/count checks, anchored verdict parsing, `fill_prompt()` placeholder guard, the naked-numeral lint, and the bib-merge script against fixtures (killed-verdict-on-line-4, partial fan-out, unfilled placeholder, naked numeral in prose, duplicate bib key) — each must fail loudly, not pass silently.
 - **End-to-end (M6):** `wildchat-tbv` instantiated and driven through the literature phase and the first pipeline steps.
 
 ---
