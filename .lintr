@@ -1,0 +1,9 @@
+linters: linters_with_defaults(
+    object_name_linter    = NULL,   # house style allows snake_case + dotted internals
+    commented_code_linter = NULL,   # example/pattern comments are intentional
+    object_usage_linter   = NULL,   # sourced globals (_setup.R) trip false positives
+    indentation_linter    = NULL,   # hand-alignment is notation (style-kit rule)
+    line_length_linter    = line_length_linter(100L)
+  )
+encoding: "UTF-8"
+exclusions: list("renv", "manuscript/_extensions", "manuscript/_book")

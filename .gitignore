@@ -1,35 +1,51 @@
-# Local runtime state
-/logs/
-/ongoing/
-/complete/
-/papers/
-/run_state/
+# ── R ──
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+renv/local/
+renv/cellar/
+renv/staging/
+renv/python/
 
-# Python artifacts
+# ── Python / uv ──
+.venv/
 __pycache__/
 *.py[cod]
-*$py.class
+.ruff_cache/
+.pytest_cache/
 
-# Stata, LaTeX, and generated report outputs
-*.aux
-*.bbl
-*.blg
-*.fdb_latexmk
-*.fls
-*.log
-*.out
-*.pdf
-*.smcl
-*.synctex.gz
-*.toc
+# ── Quarto ──
+.quarto/
+manuscript/.quarto/
+manuscript/_book/
+manuscript/_freeze/
+manuscript/_objects/
+manuscript/_table_images/
+# House Quarto extensions are installed via `make setup` (not vendored) — see M3.
+manuscript/_extensions/
 
-# Local configuration and credentials
+# ── Pipeline run state, logs, archived runs ──
+run_state/
+logs/
+runs/
+.step11_reopen_to_step10
+
+# ── Data (never commit raw or large data) ──
+data/bronze/**
+!data/bronze/.gitkeep
+data/silver/*.parquet
+data/silver/*.rds
+data/gold/**
+!data/gold/.gitkeep
+
+# ── Secrets / local / OS ──
 .env
 .env.*
-
-# Editor and OS files
+.claude/settings.local.json
 .DS_Store
 .idea/
 .vscode/
 *.swp
-*.swo
+.web-search-hook.log

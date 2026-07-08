@@ -1,0 +1,18 @@
+[project]
+name = "quarto-paper-factory"
+version = "0.1.0"
+description = "Quarto-native agentic paper-factory template"
+requires-python = ">=3.10"
+# The template ships no Python runtime deps; helper scripts use the stdlib.
+# The literature phase (M4) drives the external `grove` CLI, installed separately.
+dependencies = []
+
+[dependency-groups]
+dev = ["ruff>=0.6"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# Correctness-focused; house comment/format conventions are enforced by review.
+select = ["E", "F", "W", "I"]
