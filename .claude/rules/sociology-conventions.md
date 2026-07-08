@@ -148,6 +148,6 @@ Every draft gets a derobotification pass. Strip these patterns:
 - **Minimum length**: 8,000+ words
 - **BibTeX**: No `url` fields (bibliography.bst bug causes fatal errors). Omit from every entry.
 - **Writing reference**: Read `.claude/references/model-papers-style.json` for patterns extracted from 17 published papers. Study `writing_style` and `quality_markers` sections.
-- **Terminology discipline**: For vocabulary register matching, the three levels of abstraction, the three-tier fix protocol (autonomous / batch / consultation), and the project vocabulary scaffold (moral economy / moral repugnance / the technical-vs-moral wedge), see `.claude/references/terminology-discipline.md`. Apply during all empirical-chapter revisions and writing.
+- **Terminology discipline**: For vocabulary register matching, the three levels of abstraction, the three-tier fix protocol (autonomous / batch / consultation), and the project vocabulary scaffold, see `.claude/references/terminology-discipline.md`. Apply during all empirical-chapter revisions and writing.
 - **Citations**: pandoc syntax (`@key` textual, `[@key]` parenthetical, `[-@key]` year-only); CSL via `manuscript/chicago-author-date.csl`. Booktabs for all tables. Notes via the `notes =` argument of `modelsummary`/`tinytable`, or in the chunk's `#| tbl-cap` / `#| fig-cap`. Render with `manuscript/render.sh`.
-- **Author field**: Simon Friis
+- **Author field**: taken from `project_brief.md` (`## Author`); the runner substitutes it into the step prompts as `__AUTHOR__`.

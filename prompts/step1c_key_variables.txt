@@ -4,9 +4,9 @@ RESEARCH QUESTION: __RESEARCH_QUESTION__
 
 Read project_brief.md for the research question and context. Read data_wrangle.md for the raw data inventory, merged datasets, and sample options. Follow the conventions in `CLAUDE.md` and `.claude/rules/` (especially `content-standards.md` for tables/figures and `sociology-conventions.md` for prose).
 
-PROJECT DATA STATE — READ FIRST: Key variables are already constructed and validated in `data/silver/` — notably the moral-repugnance index (mean of the seven `q.resist.*` items), the can/should assist-vs-automate items, occupation attributes, and demographics; the scale-development study (`data/silver/scale_validation.parquet`) validates the repugnance scale. Document these existing definitions and their validation in key_variables.md.
+DATA STATE — READ FIRST: If key variables are already constructed and validated in `data/silver/` (see `project_brief.md` and `data_wrangle.md`), document those canonical definitions and their validation in key_variables.md and build on them. Otherwise, construct the key variables from `data/silver/` (or from `data/bronze/` via `munge/`) and document each construction decision and any validation.
 - EXPLORE AND EXTEND FREELY. Read all silver tables (and the raw bronze beneath them) for understanding and ideas, and construct ADDITIONAL variables the analysis or your creative hypotheses need (transformations, indices, occupation-level aggregates, alternative operationalizations). Add them with clear, labeled names and document construction decisions.
-- PRESERVE THE CANONICAL DEFINITIONS. Do not silently overwrite or redefine the existing canonical variables (especially the repugnance index) without a documented reason. If you propose a better operationalization, keep the original alongside it and explain the change.
+- PRESERVE THE CANONICAL DEFINITIONS. Do not silently overwrite or redefine existing canonical variables without a documented reason. If you propose a better operationalization, keep the original alongside it and explain the change.
 
 IMPORTANT — FILE NAMING: Prefix ALL your R scripts with desc_ (e.g., scripts/R/desc_05_build_outcome.R, scripts/R/desc_06_build_treatment.R). Use numbers 05–09. Prefix helper scripts with desc_ (e.g., scripts/desc_build_vars.py). Save R session output to `scripts/R/output/desc_<name>.log`.
 

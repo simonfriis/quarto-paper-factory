@@ -53,7 +53,7 @@ Title and abstract live in the book's front-matter file (e.g., `manuscript/index
 ```yaml
 title: "PAPER TITLE HERE"
 author:
-  - Simon Friis
+  - __AUTHOR__
 abstract: "ABSTRACT PLACEHOLDER — DO NOT REPLACE. Will be written by a fresh-eyes reader in Step 14."
 keywords: [Keyword One, Keyword Two, Keyword Three]
 ```
