@@ -26,9 +26,9 @@ library(patchwork)
 # only if installed rather than hard-failing the render.
 if (requireNamespace("ggtext", quietly = TRUE)) library(ggtext)
 
-# ── Shared figure theme (serif, no plot titles — captions live in chunks) ──
-# M3: replace with theme_set(theme_florilegium()).
-theme_set(theme_minimal(base_family = "serif"))
+# ── House figure theme (florilegium / Ruling Pen; serif, no plot titles) ──
+source(here::here("R/theme_florilegium.R"))
+theme_set(theme_florilegium())
 
 # ── Significance thresholds + legend (one English across every table) ──
 star_levels <- c("+" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001)

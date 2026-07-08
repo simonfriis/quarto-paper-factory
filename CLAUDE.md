@@ -70,10 +70,12 @@ Manuscript chapters that run R begin with:
 ```r
 #| label: setup-<chapter>
 #| include: false
-source(here::here("manuscript/_setup.R"))
+# manuscript/_quarto.yml is a `here` root marker, so here::here() alone resolves to
+# manuscript/. Source the relative path first; _setup.R's here::i_am() fixes the root.
+source(if (file.exists("_setup.R")) "_setup.R" else here::here("manuscript/_setup.R"))
 ```
 
-`manuscript/_setup.R` is the shared render engine (packages, theme, table backend).
+`manuscript/_setup.R` is the shared render engine (packages, `theme_florilegium()`, table backend).
 
 ## Folder structure
 
