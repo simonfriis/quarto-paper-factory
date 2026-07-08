@@ -16,7 +16,7 @@ It is designed to plug into a **house toolchain**:
 ## Quick start
 
 ```bash
-make setup                     # install the R + Python toolchain (once)
+make setup                     # renv::restore() the pinned R toolchain (once)
 cp -r <this-template> my-paper && cd my-paper && git init   # instantiate a project
 $EDITOR project_brief.md       # fill in the one source-of-truth file
 # add raw data to data/bronze/, write munge/ cleaning scripts -> data/silver/

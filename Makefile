@@ -10,9 +10,9 @@ help:
 	@echo "make lint     lint R (lintr) and Python (ruff, correctness only)"
 	@echo "make check    lint + render — work is not done until this passes"
 
-# One-time bootstrap of the analysis + lint toolchain.
+# One-time bootstrap: restore the pinned R toolchain from renv.lock (R >= 4.6).
 setup:
-	Rscript -e 'pkgs <- c("here","tidyverse","modelsummary","tinytable","scales","patchwork","lintr"); miss <- pkgs[!pkgs %in% rownames(installed.packages())]; if (length(miss)) install.packages(miss, repos = "https://cloud.r-project.org") else message("R packages present")'
+	Rscript -e 'if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv", repos = "https://cloud.r-project.org"); renv::restore(prompt = FALSE)'
 	@echo "note: 'uvx ruff' auto-installs ruff on first use — no pip step needed."
 # M3 appends the house Quarto extensions here (needs `gh auth login`):
 #   gh api repos/simonfriis/quarto-florilegium/tarball/main > /tmp/florilegium.tar.gz && cd manuscript && quarto add /tmp/florilegium.tar.gz

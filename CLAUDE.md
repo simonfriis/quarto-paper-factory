@@ -90,13 +90,14 @@ project_brief.md the one file you fill            Makefile     setup · render �
 
 ## Prerequisites
 
-`claude` CLI (and optionally `codex`); `quarto` ≥ 1.5; R with the `make setup`
-packages; `uv`/`uvx` for `ruff`; `gh` (for the M3 extension install); `grove` +
-`OPENALEX_EMAIL` for the M4 depth search. Run `make setup` once after cloning.
+`claude` CLI (and optionally `codex`); `quarto` ≥ 1.5; **R ≥ 4.6** (the analysis +
+render toolchain is pinned in `renv.lock`; `make setup` runs `renv::restore()`);
+`uv`/`uvx` for `ruff`; `gh` (for the M3 extension install); `grove` + `OPENALEX_EMAIL`
+for the M4 depth search. Run `make setup` once after cloning.
 
 ## Getting started
 
-1. `make setup` — install the toolchain (and, from M3, the Quarto extensions).
+1. `make setup` — `renv::restore()` the pinned R toolchain (and, from M3, install the Quarto extensions).
 2. Fill `project_brief.md` and `.claude/references/domain-profile.md`.
 3. Put raw data in `data/bronze/`, write `munge/` cleaning scripts, build `data/silver/`.
 4. Run the literature phase, then `./run_prompts.sh`.
