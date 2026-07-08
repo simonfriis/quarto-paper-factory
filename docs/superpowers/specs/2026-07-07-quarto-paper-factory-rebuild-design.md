@@ -1,7 +1,7 @@
 # Quarto-Native Paper Factory — Rebuild & Integration Design
 
 - **Date:** 2026-07-07
-- **Status:** Draft for review
+- **Status:** Draft for review (rev. 2 — incorporates the Fable Oracle review: §5.4 mechanical-gates hardening, §7.4 grove hardening, and corrections C1–C16)
 - **Repo (home of this work):** `claude_paper_factory` (GitHub origin `simonfriis/quarto-paper-factory`), branch `feat/quarto-native-rebuild`
 - **Author:** Simon Friis (with Claude)
 
@@ -23,7 +23,7 @@ The **surface request** was "import the paper factory into a new project." The *
 | `claude_paper_factory` | intended base template | ⚠️ Stale fork of `nwilmers/paper_factory`: pure LaTeX + Stata-first, **zero Quarto, zero local commits**. Quarto conversion was planned (uncommitted `WORKFLOW.md`) but never started. Origin already renamed `simonfriis/quarto-paper-factory`. **This is what we rebuild.** |
 | `quarto-florilegium` | paper theme | ✅ Finished `florilegium-pdf` Quarto extension (v0.1.0, PDF/XeLaTeX). Private; installs via `gh` tarball. |
 | `florilegium-plot-theme` | plot theme | ✅ Finished ggplot theme, but named `theme_ruling_pen()` (not `theme_florilegium()`), **not an R package** (sourced scripts), and carries a **verbatim copy of the Quarto extension** (sync risk). `cc_moral_economy` does **not** actually use it yet. |
-| `grove` | lit-search engine | ✅ Mature (275 tests, ~71% recall eval). OpenAlex + Semantic Scholar + Crossref + Unpaywall + Google Books + Zotero; SPECTER/OpenAI/Voyage semantic search; forward/backward citation expansion; gap analysis; clustering. Best features on **unmerged `feat/bibtex-import`** branch; `.claude/` nearly empty (a promised `grove-research` skill does not exist). |
+| `grove` | lit-search engine | ✅ Mature (275 tests, ~71% recall eval). OpenAlex + Semantic Scholar + Crossref + Unpaywall + Google Books + Zotero; SPECTER/OpenAI/Voyage semantic search; forward/backward citation expansion; gap analysis; clustering. Best features on **unmerged `feat/bibtex-import`** branch (grove is currently checked out there); a `grove-research` skill **already exists** at `.claude/skills/grove-research/SKILL.md`. |
 | `claude-style-kit` | house style | ✅ Newest, canonical style source (June 2026). Drop-in `.claude/rules/python-style.md` + `r-quarto-style.md` with adversarial ✓/✗ framing. **Not a git repo.** Conflicts with `cc_moral_economy`'s R rules (see §6). Prose is deliberately out of scope. |
 
 ### 1.2 Systems that must stay OUT
@@ -47,6 +47,7 @@ The active `run_prompts.sh` pipeline **dispatches zero subagents and zero skills
 4. A two-stage literature workflow: interactive Deep-Research + WebSearch breadth → Grove depth → verified literature map that grounds the pipeline.
 5. Component repos brought up to date and mutually integrable.
 6. `wildchat-tbv` instantiated from the template as end-to-end validation.
+7. **Mechanical over model-judged checks:** the pipeline's gates (step completion, numbers, bibliography, verdicts) are enforced by the *runner and scripts*, not delegated to fresh LLM sessions that can rationalize their own failures (§5.4).
 
 **Non-goals**
 
@@ -69,6 +70,7 @@ The active `run_prompts.sh` pipeline **dispatches zero subagents and zero skills
 | 6 | Grove lit search | Interactive **pre-pipeline** literature phase producing a verified `literature_map.md` that grounds the run; grove invoked as an external CLI prerequisite. Grove depth stage optional/when-appropriate. |
 | 7 | Spec scope | All five sub-projects (A–E), sequenced with stop-and-review gates. |
 | 8 | wildchat-tbv | Instantiate from the finished template as the final end-to-end validation. |
+| 9 | Instantiation & checks | Template is **copied wholesale** into a new project dir, so `__FACTORY__` ≡ `__PROJECT_PATH__` and is dropped. Pipeline gates are runner/script-enforced, not model-judged (§5.4). |
 
 ---
 
@@ -77,7 +79,7 @@ The active `run_prompts.sh` pipeline **dispatches zero subagents and zero skills
 ```
 quarto-paper-factory/                 (claude_paper_factory, rebuilt)
 ├── run_prompts.sh                     # pipeline runner — generic; latent bugs fixed
-├── prompts/                           # 16 de-specialized step prompt files
+├── prompts/                           # 33 files across the 16-step pipeline (de-specialized)
 │   ├── step1a_deep_research.txt       #   (literature grounding parameterized)
 │   ├── step1b_data_wrangle.txt        #   (PROJECT DATA STATE genericized)
 │   ├── step1c_key_variables.txt
@@ -123,12 +125,16 @@ quarto-paper-factory/                 (claude_paper_factory, rebuilt)
 │   ├── references.bib                 #   (no url fields — style constraint)
 │   └── chicago-author-date.csl
 ├── R/
-│   └── theme_florilegium.R            # canonical plot theme, wired in (§8)
+│   └── theme_florilegium.R            # plot theme (vendored from upstream), wired in (§8)
+├── scripts/R/                         # analysis scripts + output/ logs (project fills)
+├── quality_reports/                   # plans, session logs (project fills)
 ├── data/{bronze,silver,gold}/         # empty medallion scaffold + .gitkeep
 ├── literature/                        # empty; filled by the lit phase
 │   └── reports/                       #   drop-zone for pasted Deep Research reports
 ├── munge/                             # empty; project fills
-├── Makefile                           # `setup` installs florilegium (+asq); `render`; `lint`; `check`
+├── renv.lock  renv/                   # R dependency lockfile (restored at `make setup`)
+├── pyproject.toml                     # Python deps (uv)
+├── Makefile                           # `setup` installs florilegium + R/Py deps; `render`; `lint`; `check`
 ├── project_brief.md                   # parametric scaffold — the one file you fill
 ├── CLAUDE.md                          # generic conventions
 └── README.md  STEPS.md                # generic docs (rewritten from LaTeX/Stata originals)
@@ -154,14 +160,17 @@ Derived from tracing `run_prompts.sh` and every `prompts/*.txt` file in `cc_mora
 - `pre-compact.py`, `post-compact-restore.py`
 
 **`.claude/rules/` (house style + writing + workflow)**
-- `content-standards.md` (with table override), `r-environment.md`, `research-workflow.md`, `git-conventions.md`, `logging.md`, `sociology-conventions.md`, `quality.md` (thresholds as context)
+- `content-standards.md` (with table override), `research-workflow.md`, `git-conventions.md`, `logging.md`, `sociology-conventions.md`
+- `r-environment.md` — kept, but **strip the phantom "SessionStart hook will initialize renv automatically" line** (no such hook exists — review C9); replace with an explicit `make setup` renv-restore instruction
 - `workflow.md` — trimmed to the generic + Codex-CLI-integration content (orchestrator/skill sections removed)
-- **Replaced** by claude-style-kit: `r-style-general.md` + `r-style-notebooks.md` → `r-quarto-style.md`; add `python-style.md`
-- `agents.md`, `revision.md` — reviewed; kept only if genuinely generic after stripping worker-critic/skill references, else dropped
+- **Replaced** by claude-style-kit: `r-style-general.md` + `r-style-notebooks.md` → `r-quarto-style.md`; add `python-style.md`. **Port the delta**: the retired `r-style-general.md` carries `withr::with_seed()` (never bare `set.seed()`) — the kit has no seed guidance, so add it to the override section (review C12).
+- **DROP** `quality.md` — it is 100% worker-critic scaffold content (score aggregation keyed to `*-critic` agents, the ≥95 gate); "keeping as context" would reinject the dropped scaffold's identity into every session (review C8). Any genuinely useful threshold moves into `research-workflow.md`.
+- **DROP** `agents.md`, `revision.md` — describe the excluded worker-critic/skill system; the prompt pipeline does not use them.
 
 **`.claude/references/`**
 - `domain-profile.md`, `terminology-discipline.md` → **blanked to parametric templates**
 - `journal-profiles.md`, `prose-craft.md`, `abstract-examples.md`, `model-papers-style.json` → kept (prose-craft now wired into writing steps 7/9/10/15)
+- **DROP** `table-conventions.md` (referenced by nothing — review C13) and the empty root `templates/` dir.
 
 **Structure**
 - `manuscript/` Quarto book scaffold (`_quarto.yml`, chapter `.qmd`s, `_setup.R`, `render.sh`, `references.bib`, CSL)
@@ -176,12 +185,28 @@ Derived from tracing `run_prompts.sh` and every `prompts/*.txt` file in `cc_mora
 
 Rationale: the active pipeline never invokes them (§1.3). The paper-factory-original agents (architect, decider, ext-*, etc.) are **redundant** with the corresponding `prompts/step4_*.txt` files, which already encode the same logic and are what the pipeline actually runs.
 
-### 5.3 FIX — latent bugs found during inventory
+### 5.3 FIX — LaTeX-era vestige cluster (corrected per Oracle review, C1/C4)
 
-1. `__FACTORY__` placeholder appears in `step7`, `step8`, `step14` but is never substituted by `fill_prompt()`. → Add to substitution map (resolve to the template root path) **or** remove references.
-2. `__BASE_NAME__` placeholder in `step7`/`step8` never substituted. → Add to `fill_prompt()` (source from `project_brief.md` or a CLI arg) or remove.
-3. `scripts/verify_numbers.py` referenced by `step7`/`step8` does not exist. → Either port a real number-verification helper or remove the invocation.
-4. `step14_abstract.txt` reads `__FACTORY__/.claude/references/abstract-examples.md` → currently broken; fixed by (1).
+The review corrected a false premise: **`scripts/verify_numbers.py` DOES exist** — in the stale `claude_paper_factory` base being rebuilt — where it is LaTeX/Stata-specific (expects `{base}_paper.tex`, Stata `.log` globs, `.tex` tables). It is the pipeline's **only mechanical number-verification tool**, and §4's "remove stale content" would delete it. The three "independent bugs" are one coherent vestige cluster driven by that script's placeholders. Corrected actions:
+
+1. **Port and rewrite `verify_numbers.py` for Quarto** — compare numbers in `manuscript/*.qmd` prose against `scripts/R/output/*.log` + rendered tables. Do **not** delete it. (§5.4 must-do 3 has the *runner*, not a model, execute it.)
+2. **Delete `__BASE_NAME__`** — a LaTeX artifact (`{base}_paper.tex`); the Quarto book has no base-name. Occurs at `step7:4`, `step8:29`.
+3. **Delete `__FACTORY__`** — resolved by the instantiation decision (§11 M6: template copied wholesale → `__FACTORY__` ≡ `__PROJECT_PATH__`). Occurs in `step8`, `step14` (not step7). This auto-fixes step 14's broken abstract-examples path.
+4. **Add a residual-placeholder guard** to `fill_prompt()` (§5.4 must-do 4) so any future unfilled `__TOKEN__` aborts loudly.
+
+(Note: the triple-underscore `paper_map___N__.md` in `step4_architect*.txt` is **not** a bug — bash `${content//__N__/N}` resolves it correctly.)
+
+### 5.4 Pipeline hardening — mechanical gates (elevated from Oracle review)
+
+**Core principle:** the pipeline's checks are enforced by the runner and scripts, not delegated to fresh LLM sessions that can rationalize their own failures. The review's stage-by-stage stress test found the current runner swallows fan-out failures (`wait || true`), matches verdicts with `head -3 | grep` (a killed project sails through if the verdict lands on line 4), false-triggers the REOPEN loop on any prose mention of `REOPEN_STEP10`, and "continues" into the polish steps after max-reopen — polishing a paper with acknowledged unresolved blocking issues. Five must-do hardening items become first-class template requirements:
+
+1. **Sentinel + fan-out count checks for every step.** Extend `step_output()` (currently only 1a–1e/3/4decide) to all 25 runner steps using the deliverables named in `STEPS.md`; for fan-outs verify the expected file *count* (`extension_brief_[1-7].md`, `paper_map_[1-5].md`, `paper_map_review_[1-5].md`) before touching the `.done` marker; collect child PIDs and `wait $pid` individually in `--parallel` so failures propagate. (Kills the largest silent-failure class.)
+2. **Anchored, line-1-only verdict parsing.** `head -1 | grep -q '^VERDICT: KILL'` (1d) and `'^VERDICT: REOPEN_STEP10'` (11); each gate step deletes its own prior output before writing (defeats stale-verdict carryover); on `MAX_REOPEN` exhaustion **halt for human review** rather than continuing into steps 12–15.
+3. **Quarto-native `verify_numbers.py` executed by the runner** at steps 8, 11, and **after step 15** (derobotification can silently alter numbers in prose), with the report attached to the step log. Also run it on `findings_brief.md` vs `scripts/R/output/*.log` to catch step-3 number hallucination at the source.
+4. **Residual-placeholder guard in `fill_prompt()`:** after substitution, `grep -qE '__[A-Z_]+__'` → abort naming the offending token.
+5. **Deterministic bibliography pipeline:** one script merges `codex_references.bib` + `argument_references.bib` + `seed.bib` → `manuscript/references.bib` with DOI-first dedup (fallback normalized title+year), **key-collision detection** (same key → different work = hard error), url-field stripping, and a check that every `@key` cited in `manuscript/*.qmd` resolves. Replaces three LLM-transcription hops (the current corruption vector); step 12 then only verifies existence.
+
+**Strongly recommended (fold in if cheap):** a **provenance ledger** (runner appends one JSONL line per step — id, timestamp, prompt-file sha256, engine+model, exit code, output hashes — doubling as prompt-change marker invalidation and the reproducibility record); a **runner-executed render check** (`render.sh pdf` after steps 13/15, fail on nonzero — the one free CI-grade objective check); **`STEP_TIMEOUT` sizing** for the 20–30k-word step 7 (2700s truncates it); and **Dropbox guidance** (instantiate projects outside CloudStorage, or Dropbox-ignore `run_state/`+`logs/` so parallel fan-outs don't create conflicted marker files that break resume).
 
 ---
 
@@ -246,6 +271,15 @@ STAGE 2 — DEPTH (Grove; optional / when appropriate)
 
 `literature/reports/` (pasted DR reports), `literature/research_brief.md` (Stage-1 synthesis), `literature/literature_map.md` (final grounding doc, tiered + OpenAlex-verified), `literature/seed.bib`.
 
+### 7.4 Grove hardening (elevated from review)
+
+- **Project-scoped corpus hygiene.** `GROVE_DB` defaults to a single shared DB; the generic tag `seeds` would silently blend corpora across projects (`similar`/`gaps` would mix WildChat with moral-economy). Convention: tag = `<project-slug>_seed` (e.g. `wildchat_seed`); optionally a per-project `GROVE_DB` via `.claude/settings.json` env.
+- **Stage 2 is the mechanical verifier of Stage 1**, even when the full depth pass is skipped: `grove acquire --doi` reconciles each report-supplied DOI against the resolved OpenAlex title and reports per-DOI failures loudly (catches hallucinated/mis-transcribed DOIs from the human handoff — the epistemic single point of failure).
+- **Saturation stop condition.** Loop `grove expand-frontier` → `grove saturation` until no new anchors (CLI machinery already exists) rather than a fixed depth.
+- **`seed.bib` is grounding/verification input, not the final bibliography.** Grove's export carries title/author/year/journal/doi but not volume/issue/pages (schema limit); extending it is grove backlog, not template scope. Final entries flow through the deterministic bib pipeline (§5.4).
+- **Codex web gap.** The web-search allowlist hooks are Claude-only; `codex` step 1a runs without domain gating, so hallucinated `codex_references.bib` entries survive until the number/bib gates. Document; the bib pipeline is the backstop. `--skip-codex` also silently collapses step 2's "dual independent analysts" into Claude-vs-Claude — document the epistemic degradation.
+- **Prereqs:** set `OPENALEX_EMAIL` (polite pool; grove's default is a placeholder `grove-lit@example.com`); pre-warm the SPECTER embedding model in `make setup`; `grove index` before `similar`.
+
 ---
 
 ## 8. Florilegium integration (Sub-project C)
@@ -257,7 +291,8 @@ STAGE 2 — DEPTH (Grove; optional / when appropriate)
 
 ### 8.2 Plot theme (ggplot)
 
-- Canonical `R/theme_florilegium.R` in the template, exposing **`theme_florilegium()`** (alias/rename of `theme_ruling_pen()`), palette `fl_pal`, and `fl_minus` label formatter.
+- **Vendored copy** `R/theme_florilegium.R` in the template, exposing **`theme_florilegium()`** (alias/rename of `theme_ruling_pen()`), palette `fl_pal`, and `fl_minus` label formatter. **Single-source honesty (review C6):** unlike the paper extension (genuinely install-on-setup, single source `quarto-florilegium`), the plot theme is a vendored copy with `florilegium-plot-theme` as the canonical upstream design source — the copy is regenerated from upstream, not independently edited (R theme scripts have no `quarto add` equivalent unless packaged; packaging deferred per §10). §14 corrected accordingly — do not claim both themes are single-source.
+- **Font-family guard (review Part 4):** `theme_florilegium()` must parameterize or fallback-guard all three internal families — `"Minion Pro"`, `"Minion Lin"`, `"Minion SC"` are hard-coded in `theme_ruling_pen.R:53,62,66`, so a `base_family` override does not reach them. On machines without Minion, fall back to EB Garamond variants so figures don't emit blank glyphs.
 - **Wired into the figure setup**: `manuscript/_setup.R` (and any `scripts/R/00_shared.R`) call `theme_set(theme_florilegium())`, replacing `cc_moral_economy`'s ad-hoc `theme_me`. This is a genuine upgrade — the factory did not previously use the house plot theme.
 - Single toggle: one format key + one `theme_set()` call switch the whole visual identity; swapping to a plain default is a one-line change.
 - Figure size convention reconciled (extension default 6.5×4in vs examples 5.2×3.2in) and documented once in `content-standards.md`.
@@ -293,7 +328,7 @@ Every moral-economy coupling identified in the inventory becomes a parameter or 
 
 | Repo | Action |
 |---|---|
-| `grove` | Merge `feat/bibtex-import` → `main` (contains bibtex import, `acquire`/`tag`, `expand`, `clusters`, `similar`, gap `--by`). Decide on experimental `feat/discovered-works-cache` (merge or park with a note). Optionally build the `grove-research` `.claude/skill` its CLAUDE.md promises. Confirm test suite green post-merge. |
+| `grove` | Merge `feat/bibtex-import` → `main` (contains `import-bibtex`, `acquire --doi`/`tag`, multi-id `expand`, `clusters`, `similar --tag`, `gaps --by`). **This merge must precede M4** — every Stage-2 command the lit phase uses is branch-only today (review C7). Decide on experimental `feat/discovered-works-cache` (merge or park with a note). The `grove-research` skill **already exists** (`.claude/skills/grove-research/SKILL.md`) — review/refine, don't rebuild. Confirm test suite green post-merge. |
 | `claude-style-kit` | `git init` + initial commit (currently untracked). It is the canonical style source and should be versioned. |
 | `quarto-florilegium` | Keep private + tarball install for now. Document the install path used by the template's `Makefile`. Revisit going public later. |
 | `florilegium-plot-theme` | Expose `theme_florilegium()`; de-vendor the `_extensions/` copy. Optionally package as an installable R package (deferred unless low-cost). |
@@ -310,11 +345,11 @@ Stop-and-review gate (⛔) after each milestone.
 - **M1 — Template spine (A).** Rebuild `claude_paper_factory`: remove LaTeX/Stata content; port `run_prompts.sh` + `prompts/` (de-specialized, bugs fixed); port `.claude/` rules/references/hooks (no agents/skills); Quarto `manuscript/` scaffold; generic `CLAUDE.md`/`README.md`/`STEPS.md`; medallion/`munge`/`literature` scaffolds. Verifiable: `run_prompts.sh --help`/dry-run lists steps; a placeholder `manuscript` renders. ⛔
 - **M2 — House style (B).** Drop in kit rules; apply table override; retire superseded R rules; wire prose-craft + lint gate. Verifiable: `make lint` runs; rules load. ⛔
 - **M3 — Florilegium (C).** `Makefile setup` installs the extension; `theme_florilegium()` added and wired into `_setup.R`; sample figure + table render with the house identity. Verifiable: `make render` produces a florilegium PDF with a themed figure and an SE-grouped table. ⛔
-- **M4 — Grove + two-stage lit search (D).** `litphase_*` prompts; `settings.json` grove perms; documented prereqs. Verifiable: dry-run the lit phase on a toy brief → `literature_map.md` + `seed.bib` produced (Stage 2 exercised against a live grove DB). ⛔
-- **M5 — Component housekeeping (E).** grove branch merge; style-kit git init; florilegium rename/de-vendor. Verifiable: grove tests green on `main`; style-kit has commits; florilegium exposes `theme_florilegium()`. ⛔
-- **M6 — Instantiate `wildchat-tbv`.** `git init`; install template; fill `project_brief.md`; run the lit phase; smoke-test the first pipeline steps end-to-end. Verifiable: a real `literature_map.md` and initial pipeline artifacts for the WildChat project. ⛔
+- **M4 — Grove + two-stage lit search (D).** **Prerequisite: merge grove `feat/bibtex-import` → `main`** (the Stage-2 commands are branch-only, review C7). Then: `litphase_*` prompts; `settings.json` grove perms (`Bash(grove:*)`); project-scoped tags; documented prereqs. Verifiable: dry-run the lit phase on a toy brief → `literature_map.md` + `seed.bib` produced (Stage 2 exercised against a live grove DB with per-DOI reconciliation). ⛔
+- **M5 — Component housekeeping (E, remainder).** style-kit `git init`; florilegium rename/de-vendor; grove `feat/discovered-works-cache` decision; `grove-research` skill review. Verifiable: style-kit has commits; florilegium exposes `theme_florilegium()`; grove tests green on `main`. ⛔
+- **M6 — Instantiate `wildchat-tbv`.** Instantiation mechanism = **copy the template repo wholesale** into the project dir, then `git init` (drop upstream history); fill `project_brief.md`; `make setup`; run the lit phase; smoke-test the first pipeline steps end-to-end. Verifiable: a real `literature_map.md` and initial pipeline artifacts for the WildChat project. ⛔
 
-Milestones map to sub-projects A→E→validation. B, C, D can be developed against the M1 spine and reviewed independently; E is cross-repo and can proceed in parallel once M1 stabilizes.
+Milestones map to sub-projects A→E→validation. B, C, D develop against the M1 spine and are reviewed independently; the **grove `main` merge is the one E item that must land before M4**, the rest of E proceeds in parallel once M1 stabilizes.
 
 ---
 
@@ -325,6 +360,7 @@ Milestones map to sub-projects A→E→validation. B, C, D can be developed agai
 - **Florilegium render:** a canonical figure (via `theme_florilegium()`) and a `modelsummary`/`tinytable` regression table (with `notes=`) render correctly (SE grouping active) in the florilegium PDF.
 - **Lit phase dry-run:** toy `project_brief.md` → Stage-1 synthesis → Stage-2 grove seed/expand/similar/gaps → `literature_map.md` + `seed.bib`. Requires a reachable grove install + DB.
 - **Grove regression:** `grove` test suite green after the `feat/bibtex-import` merge.
+- **Mechanical gates (§5.4):** unit-test the runner's sentinel/count checks, anchored verdict parsing, `fill_prompt()` placeholder guard, `verify_numbers.py`, and the bib-merge script against fixtures (killed-verdict-on-line-4, partial fan-out, unfilled placeholder, number mismatch, duplicate bib key) — each must fail loudly, not pass silently.
 - **End-to-end (M6):** `wildchat-tbv` instantiated and driven through the literature phase and the first pipeline steps.
 
 ---
@@ -338,6 +374,11 @@ Milestones map to sub-projects A→E→validation. B, C, D can be developed agai
 5. **Codex dependency.** Step 1a and step 2 use the `codex` CLI. Mitigation: preserve the existing `--skip-codex` / claude-only path; document Codex as optional.
 6. **Two-pipeline lineage in docs.** `cc_moral_economy`'s `CLAUDE.md` documents both pipelines; the template must not reintroduce the dormant half. Mitigation: rewrite `CLAUDE.md` from scratch for the template.
 7. **`wildchat-tbv` project definition.** The actual WildChat research question/data are not yet specified here. Mitigation: M6 begins by filling `project_brief.md`; out of scope for the template build itself.
+8. **The human Deep-Research handoff is the epistemic single point of failure.** Everything downstream inherits Stage 1's quality unchecked (hallucinated DOIs, stale/partial pastes). Mitigation: Stage 2 mechanically verifies the seed set (per-DOI OpenAlex reconciliation) even when the depth pass is skipped; stamp reports with date + source model; require a DOI+title table, not free prose.
+9. **Confident-slop meta-risk.** Steps 12–15 are *polishers* — they make a wrong paper look immaculate, and the max-reopen "continue anyway" path feeds them exactly that. Mitigation: the mechanical triad (§5.4 sentinels + number gate + bib lint) plus halting on max-reopen; polish is never reachable with known-unresolved blocking issues.
+10. **Grove DB state leaks between projects.** The shared default DB + a generic tag silently blends corpora. Mitigation: project-scoped tags / per-project `GROVE_DB` (§7.4).
+11. **Evaluation vacuum.** With `quality.md`'s scoring dropped, remaining gates are LLM self-assessment. Mitigation: a short *mechanical* submission checklist consumed at step 11 (numbers verified by script, figures/tables render, every citation resolves, sample path disclosed, render exits 0), plus keeping human pauses at 1d / 4decide / 11 as the real quality gate.
+12. **Model/version drift.** Fresh sessions pin no model version; a rerun months later is a different factory. Mitigation: the provenance ledger (§5.4) records engine+model per step; optional pinning via `CLAUDE_BIN`/`CODEX_BIN` flags.
 
 ---
 
@@ -345,7 +386,7 @@ Milestones map to sub-projects A→E→validation. B, C, D can be developed agai
 
 - `claude_paper_factory` (branch `feat/quarto-native-rebuild`) contains a clean, de-specialized, Quarto-native prompt-pipeline paper factory with **no** clo-author agent scaffold.
 - House style = claude-style-kit canonical + the single documented table override + the retained prose/writing layer; lint gate runs.
-- Florilegium paper + plot themes install-on-setup, are single-source-of-truth, and are actually wired into rendered output via `theme_florilegium()`.
+- Florilegium **paper** theme installs on `make setup` (single source: `quarto-florilegium`); the **plot** theme is vendored from its upstream `florilegium-plot-theme`, font-fallback-guarded, and actually wired into rendered output via `theme_florilegium()`.
 - The two-stage literature workflow produces a verified `literature_map.md` that grounds the pipeline, with grove as an external dependency and Stage 2 optional.
 - grove, claude-style-kit, and the florilegium repos are versioned, up to date, and mutually integrable.
 - `wildchat-tbv` is instantiated from the template and passes the end-to-end smoke test.
