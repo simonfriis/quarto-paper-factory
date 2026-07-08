@@ -46,7 +46,8 @@ YOUR JOB:
    - the need to reframe the contribution
 
 4. WRITE viability_gate.md.
-   At the very top, write exactly one line:
+   The FIRST line of the file must be exactly one of these — no title, blank line, or
+   preamble before it (the runner parses line 1 only):
    - VERDICT: PASS
    - VERDICT: KILL
 

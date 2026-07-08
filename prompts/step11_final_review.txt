@@ -8,7 +8,7 @@ Perform these checks and write your findings to `final_review.md`:
 5. Is the appendix well-organized? Are robustness results and background material properly placed there rather than cluttering the body?
 6. Any other issues?
 
-At the very top of `final_review.md`, write exactly one verdict line:
+The FIRST line of `final_review.md` must be exactly one of these verdict lines — no title, blank line, or preamble before it (the runner parses line 1 only):
 - `VERDICT: PASS_WITH_DIRECT_FIXES`
 - `VERDICT: REOPEN_STEP10_TEXT`
 - `VERDICT: REOPEN_STEP10_ANALYSIS`

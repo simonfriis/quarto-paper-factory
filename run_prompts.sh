@@ -2,14 +2,13 @@
 set -euo pipefail
 
 # ─────────────────────────────────────────────────────────────────────────────
-# run_prompts.sh — runner for the WN prompt pipeline (prompts/step*.txt)
+# USAGE_START
+# run_prompts.sh — runner for the paper-factory prompt pipeline (prompts/step*.txt)
 #
-# Feeds each prompt-pipeline step to a FRESH model session (Claude or Codex),
-# substituting placeholders (__RESEARCH_QUESTION__, __PROJECT_PATH__, __N__,
-# __LENS__), fanning out the parallel steps, and honoring the KILL / REOPEN gates.
-#
-# This drives the PROMPT FILES, not the .claude/skills (which are the separate
-# Claude-author agent pipeline). See memory: wn-prompt-pipeline-not-skills.
+# Feeds each pipeline step to a FRESH model session (Claude or Codex), substituting
+# placeholders (__RESEARCH_QUESTION__, __PROJECT_PATH__, __AUTHOR__, __N__, __LENS__),
+# fanning out the parallel steps, and honoring the KILL / REOPEN gates. Each step is
+# self-contained; context flows only through files on disk.
 #
 # Usage:
 #   ./run_prompts.sh [project_dir]            Run / resume the pipeline
@@ -22,7 +21,9 @@ set -euo pipefail
 # Flags: --auto (no pause between steps) · --parallel (fan-out/dual concurrently)
 #        --skip-codex (route codex steps to Claude) · --dry-run
 #
-# Env: CLAUDE_BIN (default: claude), CODEX_BIN (default: codex)
+# Env: CLAUDE_BIN (default: claude), CODEX_BIN (default: codex),
+#      STEP_TIMEOUT (default 2700s), LENS_ONLY (subset of lens numbers, e.g. "2 4")
+# USAGE_END
 # ─────────────────────────────────────────────────────────────────────────────
 
 FACTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -67,31 +68,7 @@ STEPS=(
   "15|step15_derobotification|claude|none|none"
 )
 
-usage() { sed -n '4,30p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0; }
-
-# ── Argument parsing ─────────────────────────────────────────────────────────
-MODE="run"; TARGET=""; AUTO=false; PARALLEL=false; SKIP_CODEX=false; DRY_RUN=false
-PROJECT_DIR="."
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --help|-h)   usage ;;
-    --status)    MODE="status"; shift ;;
-    --step)      MODE="step"; TARGET="${2:?--step needs an id}"; shift 2 ;;
-    --from)      MODE="from"; TARGET="${2:?--from needs an id}"; shift 2 ;;
-    --auto)      AUTO=true; shift ;;
-    --parallel)  PARALLEL=true; shift ;;
-    --skip-codex) SKIP_CODEX=true; shift ;;
-    --dry-run)   DRY_RUN=true; shift ;;
-    *)           PROJECT_DIR="$1"; shift ;;
-  esac
-done
-
-[[ -d "$PROJECT_DIR" ]] || { echo -e "${RED}Not a directory: $PROJECT_DIR${NC}"; exit 1; }
-cd "$PROJECT_DIR"
-PROJECT_DIR_ABS="$(pwd)"
-MARKER_DIR="$PROJECT_DIR_ABS/run_state/factory"
-LOG_DIR="$PROJECT_DIR_ABS/logs/factory"
-mkdir -p "$MARKER_DIR" "$LOG_DIR"
+usage() { awk '/^# USAGE_START/{f=1;next} /^# USAGE_END/{f=0} f' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0; }
 
 # ── Research question (single source of truth: project_brief.md) ─────────────
 extract_rq() {
@@ -99,22 +76,62 @@ extract_rq() {
   awk '/^## Research Question/{f=1;next} /^## /{f=0} f' project_brief.md \
     | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//'
 }
-RESEARCH_QUESTION="$(extract_rq || true)"
+
+# ── Author (optional; substituted as __AUTHOR__ into the manuscript front matter) ──
+extract_author() {
+  [[ -f project_brief.md ]] || return 1
+  awk '/^## Author/{f=1;next} /^## /{f=0} f' project_brief.md \
+    | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | head -1
+}
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 step_field() { echo "$1" | cut -d'|' -f"$2"; }
 step_index() { local id="$1" i; for i in "${!STEPS[@]}"; do [[ "$(step_field "${STEPS[$i]}" 1)" == "$id" ]] && { echo "$i"; return; }; done; echo -1; }
 marker() { echo "$MARKER_DIR/$1.done"; }
 
-# Primary deliverable per step (empty = no single sentinel → fall back to exit code).
-step_output() {
-  case "$1" in
-    1a) echo codex_research.md ;; 1b) echo data_wrangle.md ;; 1c) echo key_variables.md ;;
-    1d) echo viability_gate.md ;; 1e) echo descriptive_map.md ;;
-    3)  echo findings_brief.md ;; 4decide) echo argument_decision.md ;;
-    *)  echo "" ;;
-  esac
+# Mechanical completion check (spec §5.4): a step is "done" only when its deliverable(s)
+# actually exist — not merely because the session exited 0.
+_wait_all() {  # PIDs… → 0 if all background jobs succeeded, 1 if any failed
+  local pid rc=0
+  for pid in "$@"; do [[ -n "$pid" ]] || continue; wait "$pid" || rc=1; done
+  return $rc
 }
+_glob_count() {  # <prefix> <count> → 0 if ≥count files like <prefix>[1-9]*.md exist
+  local prefix="$1" expected="$2" n=0 f
+  for f in ${prefix}[1-9]*.md; do [[ -f "$f" ]] && n=$((n+1)); done
+  if [[ "$n" -lt "$expected" ]]; then
+    echo -e "${RED}✗ fan-out incomplete: found $n/$expected ${prefix}[1-9]*.md${NC}" >&2; return 1
+  fi
+  return 0
+}
+step_check() {  # id → 0 if all expected deliverables present, else 1 (+ message)
+  local id="$1" out="" f rc=0
+  case "$id" in
+    1a) out="codex_research.md" ;;    1b) out="data_wrangle.md" ;;
+    1c) out="key_variables.md" ;;     1d) out="viability_gate.md" ;;
+    1e) out="descriptive_map.md" ;;   2)  out="findings_brief_claude.md findings_brief_codex.md" ;;
+    3)  out="findings_brief.md" ;;
+    4ext)    _glob_count "extension_brief_" 7;   return $? ;;
+    4lens)   _glob_count "paper_map_" 5;         return $? ;;
+    4review) _glob_count "paper_map_review_" 5;  return $? ;;
+    4audit)  out="proposal_audit.md" ;;   4decide) out="argument_decision.md" ;;
+    5argres) out="argument_research.md" ;;
+    7)  out="sample_support.md dropped_findings.md" ;;
+    8)  out="code_review.md" ;;        9)  out="review_comments.md" ;;
+    10) out="revision_summary.md" ;;   11) out="final_review.md" ;;
+    12) out="citation_audit.md" ;;     13) out="table_formatting.md" ;;
+    14) out="abstract_draft.md" ;;     15) out="derobotification.md" ;;
+    *)  out="" ;;   # 4exec/5audit/6 mutate scripts or append to findings_brief.md → exit-code only
+  esac
+  for f in $out; do
+    [[ -f "$f" ]] || { echo -e "${RED}✗ step $id: missing deliverable $f${NC}" >&2; rc=1; }
+  done
+  return $rc
+}
+
+# Gate parsing — line-1 only (spec §5.4); factored out so they are unit-testable.
+kill_triggered()   { [[ -f viability_gate.md ]] && head -1 viability_gate.md | grep -q "^VERDICT: KILL"; }
+reopen_triggered() { [[ -f final_review.md   ]] && head -1 final_review.md   | grep -q "^VERDICT: REOPEN_STEP10"; }
 
 lens_text() {  # extract the LENS_N block from step4_architect_lenses.txt
   awk -v s="---LENS_${1}---" '$0==s{f=1;next} /^---/{f=0} f' "$PROMPTS_DIR/step4_architect_lenses.txt"
@@ -124,8 +141,14 @@ fill_prompt() {  # promptfile [N] [LENS]
   local content; content="$(cat "$1")"
   content="${content//__RESEARCH_QUESTION__/$RESEARCH_QUESTION}"
   content="${content//__PROJECT_PATH__/$PROJECT_DIR_ABS}"
+  content="${content//__AUTHOR__/$AUTHOR}"
   [[ -n "${2:-}" ]] && content="${content//__N__/$2}"
   [[ -n "${3:-}" ]] && content="${content//__LENS__/$3}"
+  # Mechanical gate (spec §5.4): never run a step with an unresolved __PLACEHOLDER__.
+  if grep -qE '__[A-Z_]+__' <<<"$content"; then
+    echo "fill_prompt: unresolved placeholder(s) in $1: $(grep -oE '__[A-Z_]+__' <<<"$content" | sort -u | tr '\n' ' ')" >&2
+    return 1
+  fi
   printf '%s' "$content"
 }
 
@@ -168,9 +191,10 @@ run_step() {  # the full step record "id|spec|engine|fanout|gate"
     none)
       if [[ "$spec" == "DUAL" ]]; then
         if [[ "$PARALLEL" == true ]]; then
-          run_one "$PROMPTS_DIR/step2_claude_analyst.txt" claude "2_claude" &
-          run_one "$PROMPTS_DIR/step2_codex_analyst.txt"  codex  "2_codex"  &
-          wait
+          local pids=()
+          run_one "$PROMPTS_DIR/step2_claude_analyst.txt" claude "2_claude" & pids+=($!)
+          run_one "$PROMPTS_DIR/step2_codex_analyst.txt"  codex  "2_codex"  & pids+=($!)
+          _wait_all "${pids[@]}" || return 1
         else
           run_one "$PROMPTS_DIR/step2_claude_analyst.txt" claude "2_claude"
           run_one "$PROMPTS_DIR/step2_codex_analyst.txt"  codex  "2_codex"
@@ -180,38 +204,67 @@ run_step() {  # the full step record "id|spec|engine|fanout|gate"
       fi
       ;;
     ext7)
-      local f
+      local f pids=()
       for f in "$PROMPTS_DIR"/step4_ext*.txt; do
-        if [[ "$PARALLEL" == true ]]; then run_one "$f" claude "4ext_$(basename "$f" .txt)" &
+        if [[ "$PARALLEL" == true ]]; then run_one "$f" claude "4ext_$(basename "$f" .txt)" & pids+=($!)
         else run_one "$f" claude "4ext_$(basename "$f" .txt)"; fi
       done
-      [[ "$PARALLEL" == true ]] && wait || true
+      [[ "$PARALLEL" == true ]] && { _wait_all "${pids[@]}" || return 1; }
       ;;
     lens5)
-      local n
+      local n pids=()
       for n in ${LENS_ONLY:-1 2 3 4 5}; do
-        if [[ "$PARALLEL" == true ]]; then run_one "$PROMPTS_DIR/step4_architect.txt" claude "4lens_$n" "$n" "$(lens_text "$n")" &
+        if [[ "$PARALLEL" == true ]]; then run_one "$PROMPTS_DIR/step4_architect.txt" claude "4lens_$n" "$n" "$(lens_text "$n")" & pids+=($!)
         else run_one "$PROMPTS_DIR/step4_architect.txt" claude "4lens_$n" "$n" "$(lens_text "$n")"; fi
       done
-      [[ "$PARALLEL" == true ]] && wait || true
+      [[ "$PARALLEL" == true ]] && { _wait_all "${pids[@]}" || return 1; }
       ;;
     n5)
-      local n
+      local n pids=()
       for n in ${LENS_ONLY:-1 2 3 4 5}; do
-        if [[ "$PARALLEL" == true ]]; then run_one "$PROMPTS_DIR/${spec}.txt" claude "4review_$n" "$n" &
+        if [[ "$PARALLEL" == true ]]; then run_one "$PROMPTS_DIR/${spec}.txt" claude "4review_$n" "$n" & pids+=($!)
         else run_one "$PROMPTS_DIR/${spec}.txt" claude "4review_$n" "$n"; fi
       done
-      [[ "$PARALLEL" == true ]] && wait || true
+      [[ "$PARALLEL" == true ]] && { _wait_all "${pids[@]}" || return 1; }
       ;;
   esac
   if [[ "$DRY_RUN" != true ]]; then
-    local out; out="$(step_output "$id")"
-    if [[ -n "$out" && ! -f "$out" ]]; then
-      echo -e "${RED}✗ step $id produced no $out — not marking done${NC}"; return 1
+    if ! step_check "$id"; then
+      echo -e "${RED}✗ step $id incomplete — not marking done (re-run to resume)${NC}"; return 1
     fi
     touch "$(marker "$id")"
   fi
 }
+
+# ── Executable entry point ───────────────────────────────────────────────────
+# When sourced (e.g. by tests/) stop here — the functions above are all tests need.
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 0
+
+# ── Argument parsing ─────────────────────────────────────────────────────────
+MODE="run"; TARGET=""; AUTO=false; PARALLEL=false; SKIP_CODEX=false; DRY_RUN=false
+PROJECT_DIR="."
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --help|-h)   usage ;;
+    --status)    MODE="status"; shift ;;
+    --step)      MODE="step"; TARGET="${2:?--step needs an id}"; shift 2 ;;
+    --from)      MODE="from"; TARGET="${2:?--from needs an id}"; shift 2 ;;
+    --auto)      AUTO=true; shift ;;
+    --parallel)  PARALLEL=true; shift ;;
+    --skip-codex) SKIP_CODEX=true; shift ;;
+    --dry-run)   DRY_RUN=true; shift ;;
+    *)           PROJECT_DIR="$1"; shift ;;
+  esac
+done
+
+[[ -d "$PROJECT_DIR" ]] || { echo -e "${RED}Not a directory: $PROJECT_DIR${NC}"; exit 1; }
+cd "$PROJECT_DIR"
+PROJECT_DIR_ABS="$(pwd)"
+MARKER_DIR="$PROJECT_DIR_ABS/run_state/factory"
+LOG_DIR="$PROJECT_DIR_ABS/logs/factory"
+mkdir -p "$MARKER_DIR" "$LOG_DIR"
+RESEARCH_QUESTION="$(extract_rq || true)"
+AUTHOR="$(extract_author || true)"
 
 # ── Status ───────────────────────────────────────────────────────────────────
 if [[ "$MODE" == "status" ]]; then
@@ -254,12 +307,15 @@ while [[ "$i" -lt "${#STEPS[@]}" ]]; do
   if [[ "$MODE" == "run" && -f "$(marker "$id")" ]]; then
     echo -e "${YELLOW}✓ skip $id (done)${NC}"; i=$((i+1)); continue
   fi
+  # Gate steps: clear any stale verdict file so a prior run's verdict can't leak in.
+  [[ "$gate" == "kill"   ]] && rm -f viability_gate.md
+  [[ "$gate" == "reopen" ]] && rm -f final_review.md
   run_step "$rec"
-  # Gates
-  if [[ "$gate" == "kill" && -f viability_gate.md ]] && head -3 viability_gate.md | grep -q "VERDICT: KILL"; then
+  # Gates — parse the FIRST line only (spec §5.4); a verdict buried in prose must not (mis)fire.
+  if [[ "$gate" == "kill" ]] && kill_triggered; then
     echo -e "\n${RED}Project KILLED at viability gate. See kill_memo.md.${NC}"; exit 1
   fi
-  if [[ "$gate" == "reopen" && -f final_review.md ]] && grep -q "REOPEN_STEP10" final_review.md; then
+  if [[ "$gate" == "reopen" ]] && reopen_triggered; then
     if [[ "$reopen_cycles" -lt "$MAX_REOPEN" ]]; then
       reopen_cycles=$((reopen_cycles+1))
       echo -e "${YELLOW}Final review: REOPEN (cycle $reopen_cycles/$MAX_REOPEN) — re-running step 10 → 11${NC}"
@@ -267,7 +323,9 @@ while [[ "$i" -lt "${#STEPS[@]}" ]]; do
       rm -f "$(marker 10)" "$(marker 11)"
       i="$(step_index 10)"; continue
     fi
-    echo -e "${RED}Max reopen cycles reached; continuing.${NC}"
+    # Spec §5.4: never polish (steps 12–15) a paper that still carries a REOPEN verdict.
+    echo -e "\n${RED}Max reopen cycles ($MAX_REOPEN) reached with an unresolved REOPEN verdict.${NC}"
+    echo -e "${RED}Halting for human review — the polish steps must not run on unresolved blocking issues.${NC}"; exit 1
   fi
   [[ "$gate" == "reopen" ]] && rm -f "$PROJECT_DIR_ABS/.step11_reopen_to_step10"
   if [[ "$AUTO" != true && "$DRY_RUN" != true ]]; then
