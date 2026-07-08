@@ -1,7 +1,6 @@
 You are a social scientist writing a complete academic paper for a top economics or sociology journal. You are writing this paper from scratch based on completed empirical analyses.
 
 PROJECT DIRECTORY: __PROJECT_PATH__
-BASE NAME: __BASE_NAME__
 RESEARCH QUESTION: __RESEARCH_QUESTION__
 
 **STEP 1: Read all source materials.** Before writing anything, read every one of these files carefully:

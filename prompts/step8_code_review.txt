@@ -24,11 +24,7 @@ Also check for:
 - Any mismatch between what the Methods section describes and what the code actually runs
 - Any finding listed as discarded in `dropped_findings.md` that has resurfaced in the Introduction, Discussion, or Conclusion without explicit new evidence
 
-As a first pass, run the automated number-verification script:
-```bash
-python3 __FACTORY__/scripts/verify_numbers.py __PROJECT_PATH__ __BASE_NAME__
-```
-This extracts every number from the paper prose and checks whether it appears in the log output or chunk results. Review its output: numbers flagged as UNMATCHED are candidates for errors. Some will be false positives (sample sizes mentioned only in prose, derived calculations, etc.) but any unmatched coefficient, p-value, or effect size warrants careful manual verification against the source log.
+As a first pass on numbers: every statistical number in the manuscript prose must be an inline `` `r stats$...$lab` `` lookup from a live results object — no naked numeric literals (see the numbers-in-prose mandate in `CLAUDE.md` and `.claude/rules/r-quarto-style.md`). Naked numbers typed into prose are the classic error source. Scan every chapter `.qmd` for numeric literals in prose (outside code chunks and inline `` `r ` `` spans); flag each one for conversion to an inline lookup. Then spot-check that the computed inline values are correct against the R session logs in `scripts/R/output/` and the rendered tables/figures.
 
 Write your findings to `code_review.md` in the project directory. For each issue found, specify:
 - The claim in the paper (with chapter and approximate line reference)
