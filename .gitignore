@@ -23,6 +23,8 @@ manuscript/_book/
 manuscript/_freeze/
 manuscript/_objects/
 manuscript/_table_images/
+manuscript/.gitignore
+manuscript/*.html
 # House Quarto extensions are installed via `make setup` (not vendored) — see M3.
 manuscript/_extensions/
 
