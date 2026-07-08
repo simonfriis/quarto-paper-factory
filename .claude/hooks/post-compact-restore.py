@@ -14,7 +14,6 @@ import json
 import os
 import sys
 from pathlib import Path
-from datetime import datetime
 
 # Colors for terminal output
 CYAN = "\033[0;36m"

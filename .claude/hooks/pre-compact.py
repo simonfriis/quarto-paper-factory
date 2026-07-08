@@ -13,13 +13,13 @@ Hook Event: PreCompact
 Returns: Exit code 2 (message visible in transcript)
 """
 
+import hashlib
 import json
 import os
-import sys
 import re
-from pathlib import Path
+import sys
 from datetime import datetime
-import hashlib
+from pathlib import Path
 
 # Colors for terminal output
 CYAN = "\033[0;36m"
@@ -135,9 +135,9 @@ def append_to_session_log(project_dir: str, trigger: str) -> None:
 
     try:
         with open(log_files[0], "a") as f:
-            f.write(f"\n\n---\n")
+            f.write("\n\n---\n")
             f.write(f"**Context compaction ({trigger}) at {datetime.now().strftime('%H:%M')}**\n")
-            f.write(f"Check git log and quality_reports/plans/ for current state.\n")
+            f.write("Check git log and quality_reports/plans/ for current state.\n")
     except IOError:
         pass
 

@@ -81,7 +81,7 @@ def main() -> int:
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "allow",
-            "permissionDecisionReason": f"Applied project WebSearch allowlist ({len(domains)} domains)",
+            "permissionDecisionReason": f"Applied WebSearch allowlist ({len(domains)} domains)",
             "updatedInput": updated,
         }
     }))
