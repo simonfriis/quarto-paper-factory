@@ -171,6 +171,15 @@ by_species <- summarise(mass, mean_mass = mean(body_mass_g), .by = species)
 `{r flipper, echo=FALSE, fig.cap="...", fig.width=6}`. One long messy-diffing line, and an
 unlabelled chunk can't be cross-referenced or named in an error.
 
+## Numbers in prose — mandatory (house rule)
+
+Every statistical number in **manuscript prose** is an inline `` `r stats$…$lab` `` lookup from a
+live results object — **no naked numeric literals** (allowlist: years, IRB/dataset IDs,
+footnote/enumeration markers, spelled or round rhetorical numbers). Numbers in tables and figures
+come from the `modelsummary`/`tinytable`/ggplot objects, never typed. This makes prose↔analysis
+divergence structurally impossible; `scripts/python/lint_prose_numbers.py` (run by `make check` and
+the pipeline) enforces it. The next section is *how* to build those values well.
+
 ## Inline computed values — one nested results object; lookups only
 
 Pull every inline value from **one aptly-named nested results object** built in a setup
@@ -231,8 +240,10 @@ Adelie bills averaged `r scales::number(stats$bill_len$Adelie$mean, accuracy = 0
 
 ## Figures, config, callouts
 
-- **Figures & tables:** `gt` tables; `fig-`/`tbl-` labels; `@fig-` / `@tbl-` cross-refs; every
-  figure has `fig-alt`.
+- **Figures & tables:** **`modelsummary` + `tinytable`** tables (house override of the kit's
+  `gt`: the florilegium PDF format and its `se-grouping.lua` filter are built for tinytable's
+  `talltblr`, emitted only when a `notes =` argument is passed); `fig-`/`tbl-` labels; `@fig-` /
+  `@tbl-` cross-refs; every figure has `fig-alt`; ggplot captions live in the chunk, never in the plot.
 - **Config:** thin per-document YAML; format and execution defaults (incl. `echo: false`) live
   in `_quarto.yml`.
 - **Callouts:** default to none in a manuscript. ✗ Don't sprinkle `::: {.callout-note}` around
@@ -240,6 +251,12 @@ Adelie bills averaged `r scales::number(stats$bill_len$Adelie$mean, accuracy = 0
 
 ## Tooling
 
-- `make check` = `lintr` + `quarto render`. The document must knit — a typo'd `stats$…` path
-  or a broken chunk fails the render loudly, which is the designed behaviour.
+- `make check` = `lintr` + the naked-numeral lint + `quarto render`. The document must knit — a
+  typo'd `stats$…` path or a broken chunk fails the render loudly, which is the designed behaviour.
 - `lintr` for correctness only; do **not** require `pkg::` namespacing.
+
+## Reproducibility
+
+- Scope randomness with `withr::with_seed(<seed>, { … })`, never a bare `set.seed()` (a bare seed
+  leaks into every later chunk). Seed every bootstrap, permutation, and simulation.
+- The R toolchain is pinned in `renv.lock`; run `make setup` (`renv::restore()`) after cloning.
