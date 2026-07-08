@@ -14,9 +14,11 @@ help:
 setup:
 	Rscript -e 'if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv", repos = "https://cloud.r-project.org"); renv::restore(prompt = FALSE)'
 	@echo "note: 'uvx ruff' auto-installs ruff on first use — no pip step needed."
-# M3 appends the house Quarto extensions here (needs `gh auth login`):
-#   gh api repos/simonfriis/quarto-florilegium/tarball/main > /tmp/florilegium.tar.gz && cd manuscript && quarto add /tmp/florilegium.tar.gz
-#   gh api repos/simonfriis/quarto-asq/tarball/main          > /tmp/asq.tar.gz         && cd manuscript && quarto add /tmp/asq.tar.gz
+	@echo "Installing the house Quarto extensions (florilegium, asq) — needs 'gh auth login'…"
+	gh api repos/simonfriis/quarto-florilegium/tarball/main > /tmp/florilegium.tar.gz
+	cd manuscript && quarto add --no-prompt /tmp/florilegium.tar.gz
+	gh api repos/simonfriis/quarto-asq/tarball/main > /tmp/asq.tar.gz
+	cd manuscript && quarto add --no-prompt /tmp/asq.tar.gz
 
 render:
 	cd manuscript && ./render.sh

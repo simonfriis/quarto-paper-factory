@@ -41,8 +41,13 @@ execute:
   message: false
 
 format:
-  # M1 spine: plain HTML so the scaffold renders with quarto alone (no LaTeX/R
-  # extension). M3 replaces this with the house `florilegium-pdf` format (and the
-  # optional `asq-docx` / `asq-pdf` submission formats), installed via `make setup`.
-  html:
-    toc: true
+  # House typeset PDF (florilegium extension, installed by `make setup`). Typography,
+  # headings, and title page come from the extension; xelatex + Minion Pro (free-font
+  # fallback documented in the extension README).
+  florilegium-pdf:
+    knitr:
+      opts_chunk:
+        dev: cairo_pdf
+  # Optional ASQ submission formats (Word + PDF), from the asq extension:
+  # asq-docx: default
+  # asq-pdf: default
