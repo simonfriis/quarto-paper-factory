@@ -27,5 +27,6 @@ preview:
 lint:
 	Rscript -e 'lintr::lint_dir()'
 	uvx ruff check .
+	python3 scripts/python/lint_prose_numbers.py
 
 check: lint render
