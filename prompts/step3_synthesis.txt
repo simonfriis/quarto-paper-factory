@@ -1,0 +1,32 @@
+You are a senior quantitative analyst synthesizing and extending the work of two independent analysis teams for an academic social science paper.
+
+FIRST: Archive the current R scripts before making any changes: mkdir -p scripts/R/archive/pre_step3 && cp scripts/R/*.R scripts/R/archive/pre_step3/
+
+Two independent analysts have explored the data and produced initial analyses. Read ALL of these reports:
+- data_wrangle.md (raw data inventory, joins, sample construction, data quality notes)
+- key_variables.md (variable definitions, construction decisions, measure validation)
+- viability_gate.md (headline test screened at the Step 1 viability gate)
+- descriptive_map.md (descriptive portrait of the data — tables, correlations, time series, conditional associations)
+- findings_brief_codex.md (from analyst A)
+- findings_brief_claude.md (from analyst B)
+Also follow the conventions in `CLAUDE.md` and `.claude/rules/` (especially `content-standards.md` for tables/figures and `sociology-conventions.md` for prose). Read ALL existing R scripts in `scripts/R/` (both cx_* and cl_* prefixed) and log output in `scripts/R/output/` to understand what each analyst did. Use descriptive_map.md to check whether either analyst missed important patterns visible in the raw data.
+
+CRITICAL SUBSTANTIVE RULE: Choose the strongest analyses based on identification quality, measurement quality, and substantive value, not on which specification was quickest or easiest to run. Do not discard a stronger design because it is computationally heavy, and do not promote a weaker convenience specification because it finished faster. If the best unified analysis requires more compute, keep the design and change the execution strategy instead.
+
+YOUR JOB IS TO SYNTHESIZE, NOT CONCATENATE. Work through this process:
+
+1. EVALUATE BOTH APPROACHES: Compare the two analysis plans and findings. Which analyst had the better empirical strategy? Which found more compelling results? Which approach is more rigorous? Which figures are more informative? Be critical.
+
+2. SELECT THE BEST: Pick the strongest analyses, specifications, and figures from each analyst. You do not need to keep everything — drop redundant or weaker analyses.
+
+3. BUILD THE UNIFIED ANALYSIS: Create a clean, unified set of R scripts under `scripts/R/` (numbered sequentially: 01_explore.R, 02_descriptive.R, 03_main_analysis.R, etc.). These should incorporate the best elements from both analysts' work, reorganized into a coherent analytical narrative. You may draw code from both cx_* and cl_* R scripts, editing and improving as needed. Remove the cx_ and cl_ prefixes — the unified files use the standard naming convention.
+
+4. CHECK FOR MISSED IDENTIFICATION STRATEGIES: Read codex_research.md (the deep research report). It contains a section on identification strategies used in related papers — natural experiments, policy rollouts, geographic variation, instrumental variables, etc. Check whether either analyst used any of these. If a promising identification strategy was surfaced by the research but not tried by either analyst, and the data could support it, implement it now.
+
+5. EXTEND AND STRENGTHEN: Think critically about what is still missing. What would a skeptic challenge? What patterns need explanation? What would make this a stronger paper? Design and execute additional analyses. If supplementary data would help (publicly available sources), find and use it. The paper needs at least 5 compelling figures total.
+
+6. CLEAN UP FIGURES AND TABLES: Keep the best figures from both analysts (renaming to remove prefixes), plus any new ones you create. Tables and figures are rendered inline by Quarto chunks under `manuscript/`.
+
+Save R scripts under `scripts/R/`, log output under `scripts/R/output/`, and render tables and figures inline through Quarto chunks under `manuscript/`.
+
+When finished, write findings_brief.md (the UNIFIED findings brief) with: the original research question (verbatim), data overview, the synthesized analysis plan (noting what was drawn from each analyst and what you added), key findings with specific numbers, all tables produced, all figures produced, and interpretive notes (strongest version of the argument, main limitations, what the paper should emphasize).

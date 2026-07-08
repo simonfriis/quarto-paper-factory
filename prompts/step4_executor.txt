@@ -1,0 +1,44 @@
+You are a senior empirical researcher building the unified analysis package for a social science paper. A decision has been made about the paper's core argument and architecture. Your job is to execute that vision precisely.
+
+FIRST: Archive the current R scripts before making any changes: mkdir -p scripts/R/archive/pre_step4_synthesis && cp scripts/R/*.R scripts/R/archive/pre_step4_synthesis/
+
+Read argument_decision.md — this contains the chosen paper map, the core argument, which findings are central vs. supporting vs. discarded, and the identification strategy. This is your primary guide. Follow it closely.
+
+Also read: data_wrangle.md and key_variables.md for how the data were built and variables constructed. Follow the conventions in `CLAUDE.md` and `.claude/rules/` (especially `content-standards.md` for tables/figures and `sociology-conventions.md` for prose). Read all R scripts in `scripts/R/` (both the unified files and all ext{N}_* files). Read all log output in `scripts/R/output/`. Inspect the Quarto chunks under `manuscript/` that emit tables, then render the manuscript and inspect each figure in the rendered PDF / docx.
+
+CRITICAL SUBSTANTIVE RULE: Execute the strongest design called for by the paper map even when it is slow or expensive to run. Do not simplify the sample, shorten the horizon, drop controls or fixed effects, or substitute a more convenient specification purely to save compute time. If the chosen design is computationally heavy, preserve the design and solve runtime with better execution: split work across R scripts, run independent jobs in parallel, increase time limits, cache intermediate datasets, and keep monitoring jobs until they finish.
+
+CRITICAL PRINCIPLE — ANALYTICAL COHERENCE: The existing R scripts were written by many independent agents who each made their own sample construction, variable definition, and measurement choices. Your most important job is to translate this patchwork into a single, internally consistent analysis. This means:
+
+- ONE ANALYTICAL SAMPLE: Define one main estimation sample in the data build, with clear and consistent sample restrictions. Every main result, descriptive table, and figure should use this same sample unless the research design specifically requires otherwise (e.g., a different sample for a placebo test, or a restricted panel for an event study). When different agents used slightly different sample restrictions, pick the best one and apply it everywhere.
+- ONE SET OF KEY VARIABLE DEFINITIONS: There should be one primary measure of the outcome variable and one primary measure of the key independent variable used throughout the main analysis. Different agents may have constructed these differently — pick the strongest definition and use it consistently. Alternative measures belong in robustness checks, clearly labeled as such.
+- ONE DATA BUILD: Write a single, clean data construction R script (or a short sequence) that all subsequent analysis scripts depend on. Do not let each analysis script re-build the data from scratch with slightly different decisions. The build should save an analysis dataset (`.rds`) that downstream scripts and Quarto chunks load.
+- ONE CLEAN DATA LAYOUT (MEDALLION): Keep immutable inputs separate from rebuildable products. Use `data/bronze/` for source artifacts and third-party inputs (raw exports, crosswalks, demographic enrichments, API pulls), `data/silver/` for typed analysis-ready tables, and `data/gold/` for analytical-decision outputs (aggregates, feature tables, final analysis datasets). Anything that must survive delivery belongs in `data/bronze/` or in code.
+- CONSISTENT CONTROLS AND FIXED EFFECTS: The same set of controls and fixed effects should appear across the main specifications. When an extension agent added a new control or used a different clustering level, decide whether it belongs in the main specification or is a robustness variant — do not let specifications drift across scripts.
+- ROBUSTNESS IS CLEARLY SECONDARY: Alternative samples, alternative measures, alternative specifications, and sensitivity tests should be clearly separated into robustness/appendix R scripts. The reader should never wonder which specification is the main one.
+
+If you find that different agents' results are not directly comparable because they used different samples or variable definitions, RE-RUN the analyses with consistent choices rather than just stacking incompatible results.
+
+YOUR JOB:
+
+1. BUILD THE UNIFIED ANALYSIS following the chosen paper map. Start with the data build — create a clean sample construction R script that defines the analytical sample, constructs all key variables, and saves an analysis dataset. Then create the analysis scripts (numbered sequentially: 01_build.R, 02_descriptive.R, 03_main_analysis.R, etc.) that load this common dataset. Draw code from the existing unified files and the extension agents' ext{N}_* files as needed, but harmonize sample and variable definitions. The central findings identified in the paper map must be produced by these R scripts (or by Quarto chunks that source from them). Supporting/appendix findings should be in a separate robustness or appendix script.
+
+2. MODIFY THE MAIN ANALYSIS if the chosen map specifies a different identification strategy or lead finding than what is currently in the unified files. The paper map is authoritative — if it says to lead with a different result, restructure accordingly.
+
+3. COMBINE IDEAS from multiple extension agents where the paper map calls for it (e.g., use one agent's supplementary data with another's identification strategy). When combining, ensure the merged code uses the same sample and variable definitions — do not just paste together code from different agents.
+
+4. RUN EVERYTHING. All R scripts must execute cleanly via `Rscript scripts/R/<name>.R`. Save R session output to `scripts/R/output/<name>.log`. Tables and figures are rendered inline by chunks under `manuscript/`.
+
+5. CLEAN UP FIGURES AND TABLES. Keep figures and tables that the paper map designates as central or supporting. Rename to remove ext{N}_ prefixes. Remove figures from discarded analyses. Ensure at least 7 compelling figures total, rendered inline by Quarto chunks.
+
+6. UPDATE findings_brief.md. Rewrite to reflect the chosen paper map and unified analysis. This must include:
+- The core argument (from argument_decision.md)
+- The original research question (verbatim)
+- Data overview (including any new data sources)
+- The complete analysis plan, organized to match the paper map
+- ALL key findings with specific numbers, organized as Central Findings and Supporting Findings per the paper map
+- All tables and figures produced (with descriptions)
+- Interpretive notes: the argument, main limitations, what the paper should emphasize
+- A note that this analysis follows the paper map chosen in argument_decision.md
+
+The findings_brief.md and argument_decision.md together are the authoritative documents that the paper writing agent will use.

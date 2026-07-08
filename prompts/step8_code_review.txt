@@ -1,0 +1,39 @@
+You are a meticulous code reviewer and research auditor. Your job is to verify that the analysis code actually supports the claims made in the paper.
+
+In the project directory `__PROJECT_PATH__`:
+First, archive the current R scripts: `mkdir -p scripts/R/archive/pre_step8 && cp scripts/R/*.R scripts/R/archive/pre_step8/`
+1. Read the ENTIRE Quarto book under `manuscript/` (every chapter `.qmd` and any front-matter file).
+2. Read `data_wrangle.md` and `key_variables.md` for how the data were built and variables constructed.
+2b. Read `sample_support.md` and `dropped_findings.md` if they exist.
+3. Read ALL R scripts in `scripts/R/`.
+4. Read ALL build and analysis scripts in `scripts/` (Python, shell, etc.).
+5. Read ALL R session log output in `scripts/R/output/`.
+6. Read the Quarto chunks under `manuscript/` that emit tables and figures.
+
+For every empirical claim, statistic, coefficient, sample size, or result mentioned in the paper:
+- Trace it back to the specific R script and log file (or chunk) that produced it.
+- Verify the number matches exactly.
+- Check that the R script actually implements what the paper says it does (correct variables, correct sample restrictions, correct fixed effects, correct clustering, correct subsample definitions).
+
+Also check for:
+- R scripts that reference variables or datasets that don't exist or are misspelled
+- Regressions that claim certain controls or fixed effects but don't actually include them
+- Sample restrictions described in the paper that aren't implemented in the code
+- Sample-path or treatment-support claims in `sample_support.md` that are not reflected accurately in the paper
+- Figures generated from data that doesn't match what the paper describes
+- Any mismatch between what the Methods section describes and what the code actually runs
+- Any finding listed as discarded in `dropped_findings.md` that has resurfaced in the Introduction, Discussion, or Conclusion without explicit new evidence
+
+As a first pass, run the automated number-verification script:
+```bash
+python3 __FACTORY__/scripts/verify_numbers.py __PROJECT_PATH__ __BASE_NAME__
+```
+This extracts every number from the paper prose and checks whether it appears in the log output or chunk results. Review its output: numbers flagged as UNMATCHED are candidates for errors. Some will be false positives (sample sizes mentioned only in prose, derived calculations, etc.) but any unmatched coefficient, p-value, or effect size warrants careful manual verification against the source log.
+
+Write your findings to `code_review.md` in the project directory. For each issue found, specify:
+- The claim in the paper (with chapter and approximate line reference)
+- The relevant R script and line
+- What the discrepancy is
+- A suggested fix (to the code, the paper, or both)
+
+If you find issues that require code changes, make the fixes directly: edit the R scripts, re-run them via `Rscript scripts/R/<name>.R`, and update any affected tables or figures. Then update the relevant `manuscript/*.qmd` chapters so that every number, description, and claim in the text matches the corrected output. This includes coefficients, sample sizes, significance levels, effect-size interpretations, and any prose that describes what a specification does (e.g., which controls are included, how variables are defined). After fixing, re-read the relevant passages to verify consistency.

@@ -1,0 +1,28 @@
+You are doing a final quality check on a social science paper. Read every chapter `.qmd` under `manuscript/` in the project directory `__PROJECT_PATH__`. Read `data_wrangle.md` and `key_variables.md` for how the data were built and variables constructed. Render the manuscript and inspect each table and figure in the rendered PDF / docx. Read R session log output in `scripts/R/output/`.
+
+Perform these checks and write your findings to `final_review.md`:
+1. Does every number reported in the text match its source in the chunk results / log output?
+2. Does the conceptual argument align with the findings?
+3. Are there any remaining weak points, unclear passages, or inconsistencies?
+4. Count the figures — are there at least 5?
+5. Is the appendix well-organized? Are robustness results and background material properly placed there rather than cluttering the body?
+6. Any other issues?
+
+At the very top of `final_review.md`, write exactly one verdict line:
+- `VERDICT: PASS_WITH_DIRECT_FIXES`
+- `VERDICT: REOPEN_STEP10_TEXT`
+- `VERDICT: REOPEN_STEP10_ANALYSIS`
+
+Use `PASS_WITH_DIRECT_FIXES` only if all blocking issues can be fixed directly in this pass, or if only non-blocking suggestions remain. Use `REOPEN_STEP10_TEXT` if unresolved blocking issues can be fixed by a targeted paper-only revision using existing outputs already on disk. Use `REOPEN_STEP10_ANALYSIS` if any unresolved blocking issue requires new analyses, regenerated tables/figures, or R script / data changes.
+
+After completing the review, fix every problem you can resolve directly at this stage. This includes correcting misreported numbers in the manuscript chapters to match the source chunk results / log output, fixing incorrect cross-references (`@tbl-foo`, `@fig-foo`), tightening unclear or inconsistent prose, and making straightforward editorial improvements to appendix/body placement or cross-references when no new analysis is required.
+
+Do NOT rerun analyses, edit R scripts, or change underlying empirical results at this step. Do NOT make broad structural rewrites. Limit direct edits to the smallest span needed to correct the issue. Freeze the Introduction and Background unless the problem is explicitly located there. If a claim is unsupported, prefer deleting or narrowing that specific claim rather than softening the entire section. If an issue would require new regressions, regenerated tables/figures, or upstream data/code changes, leave the paper unchanged on that point and document it clearly as unresolved in `final_review.md`.
+
+In `final_review.md`, distinguish between:
+- issues you fixed directly in the paper
+- blocking issues requiring Step 10 text-only revision
+- blocking issues requiring Step 10 analysis revision
+- non-blocking suggestions
+
+Save both `final_review.md` and the updated chapter `.qmd` files in the project directory.

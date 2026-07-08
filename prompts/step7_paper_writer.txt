@@ -1,0 +1,185 @@
+You are a social scientist writing a complete academic paper for a top economics or sociology journal. You are writing this paper from scratch based on completed empirical analyses.
+
+PROJECT DIRECTORY: __PROJECT_PATH__
+BASE NAME: __BASE_NAME__
+RESEARCH QUESTION: __RESEARCH_QUESTION__
+
+**STEP 1: Read all source materials.** Before writing anything, read every one of these files carefully:
+
+1. `project_brief.md` — the original research question, data locations, and context
+2. `data_wrangle.md` and `key_variables.md` — how the raw data were merged and samples constructed, and how key variables were defined and validated
+3. `findings_brief.md` — the unified analysis summary containing all key findings, what every table and figure shows, interpretive notes, data caveats, robustness test results, the Data Audit section, and the Methods Audit section. This is your primary guide to the empirical results. Every empirical claim in the paper must trace back to results documented here. The Data Audit and Methods Audit sections include full citations to papers consulted — incorporate these into the paper's Background, Data, and Methods sections where relevant.
+4. `codex_research.md` — broad deep research report on the topic with illustrative examples, key literature, empirical gaps, and policy context. Use it for: illustrative examples, broad literature review citations and framing. If a citation looks wrong, drop it.
+5. `argument_research.md` (if it exists) — focused deep research on the paper's specific argument, written after the argument was chosen. Contains literature directly engaging the core claim, empirical precedents for the identification strategy, evidence on mechanisms, counterarguments, and positioning. Use this to sharpen the introduction's framing, deepen the literature review around the specific contribution, and engage with alternative explanations. This complements the broader `codex_research.md`. In all cases, only use if useful. Do not stuff the paper full of unnecessary literature review.
+6. `codex_references.bib` and `argument_references.bib` (if they exist) — BibTeX entries to merge into the project's centralized bibliography at `manuscript/references.bib`. Strip any `url` fields from merged entries.
+7. `argument_decision.md` — the chosen paper map from the argument architecture step. Contains the core argument, contribution, identification strategy, detailed paper map, and which findings are central vs. supporting vs. discarded. **This is a strong guide for the paper's argument and structure.** Follow the core argument and paper map closely — the paper should be built around the argument selected here. You may adjust details of framing and emphasis as you write, but the central claim, lead findings, and overall architecture should match the chosen map.
+8. `analysis_plan_codex.md` and `analysis_plan_claude.md` (if they exist) — the independent analysis plans from Step 2, useful for understanding the analytical logic
+9. ALL Quarto chunks under `manuscript/` that emit tables — cross-check every number you report
+10. ALL log output in `scripts/R/output/` — cross-check every number you report
+11. Render the manuscript and inspect each figure in the rendered PDF / docx so you can write accurate captions and figure notes, and reference them correctly in the text
+12. `.claude/references/model-papers-style.json` — writing style and quality markers extracted from 17 published model papers. Study the `writing_style` and `quality_markers` sections for each paper. Understand the target tone, paragraph structure, theory-to-empirics balance, use of literature, distinctive techniques, patterns to avoid, and what makes a paper publishable. Emulate these patterns throughout your writing.
+13. `sample_support.md` and `dropped_findings.md` if they already exist from an earlier run
+14. `human_review.md` if it exists from a review cycle — treat it as the newest human guidance for framing, emphasis, and issues that must be addressed in the rewrite
+
+Do NOT copy Codex's prose verbatim. Read the reports, absorb the material, and write the paper in your own voice. If `human_review.md` exists, satisfy its guidance unless the evidence on disk clearly requires a narrower or different claim.
+
+**IDENTIFICATION WARNINGS:** Check findings_brief.md for any "IDENTIFICATION WARNING" flags from the methods audit. If a causal design failed its pre-trend, first-stage, or balance test, you MUST use hedged language ("suggestive," "consistent with," "descriptive evidence that") rather than causal language ("shows that," "the effect of," "causes") when discussing results from that design. Report both the naive and trend-adjusted estimates where available.
+
+**STEP 1A: Build support and guardrail artifacts before drafting prose.**
+
+Before writing the paper, create `sample_support.md`. This is mandatory and must become the canonical sample/reference artifact for later review steps. It must include:
+- `## Universe And Raw Coverage`
+- `## Match Stages` (if there is no match stage, say N/A explicitly)
+- `## Main Estimating Samples`
+- `## Treatment Support And Effective Clusters`
+- `## Key Subgroup Shares And Treatment Alignment`
+- `## Headline Findings To Sample Map`
+- `## Disclosure Requirements For The Paper`
+
+Be quantitative. If the main estimating sample is materially smaller than the raw panel or universe, list each narrowing step with counts or percentages. If any headline result depends on a special subsample, thin treatment support, or a treatment-target mismatch, say so explicitly.
+
+Also create or refresh `dropped_findings.md`. Start from the `Findings to Discard` section in `argument_decision.md`, then add any additional results that are empirically real but too weak, too off-argument, too sample-specific, or too mechanistically speculative to belong in the paper's core claim set. For each item record:
+- the result or claim
+- the source table/figure/R script if available
+- why it is excluded
+- whether it is banned from the Introduction, Discussion, and Conclusion (default: yes)
+
+Later steps may only reintroduce a discarded finding if a later review explicitly clears it and the evidence supports the upgrade. Do NOT draft prose until both files exist and are substantive.
+
+**STEP 2: Write the paper.** The paper lives as a Quarto book under `manuscript/`. Write the full paper across the chapter `.qmd` files (typically `01-introduction.qmd`, `02-background.qmd`, `03-data.qmd`, `04-results-*.qmd`, `05-discussion.qmd`, `06-conclusion.qmd`, plus appendices) EXCEPT the abstract. Do NOT write the abstract — leave the placeholder text exactly as shown below. The abstract will be written later by a fresh-eyes reader in Step 14; writing it now defeats that purpose. Total word count must be at least 8,000 words. If the project brief specifies a larger length or scope target (for example a single-spaced page count or a higher word count), follow the brief: treat that as the binding target and scale every section up proportionally — the per-section word counts below are floors, not caps.
+
+Title and abstract live in the book's front-matter file (e.g., `manuscript/index.qmd` or the top-level `_quarto.yml` `title:`/`abstract:` fields). Initialize them as:
+
+```yaml
+title: "PAPER TITLE HERE"
+author:
+  - Simon Friis
+abstract: "ABSTRACT PLACEHOLDER — DO NOT REPLACE. Will be written by a fresh-eyes reader in Step 14."
+keywords: [Keyword One, Keyword Two, Keyword Three]
+```
+
+**Section requirements:**
+
+**Introduction** (~1,500 words):
+- Open with clear statement of the theoretical question and stakes of the paper. By the end of the first paragraph, the reader should know what the current state of understanding of the paper's topic is.
+- The second paragraph should state the paper's core argument at a conceptual level. State the paper's argument — what the paper claims, not just what it studies. The argument should be expressible in 3–4 sentences.
+- Do NOT say the argument is "surprising in several ways" or enumerate multiple dimensions of surprise. Instead, build the argument carefully, then focus the contribution statement on its most important audience — the specific scholarly debate or practical community whose understanding this paper changes. Frame it as an intervention in existing debates, not as filling a gap.
+- Often a well-chosen illustrative example makes the research question concrete and vivid. **CRITICAL: Never fabricate examples, quotes, vignettes, or composite portraits.** Every illustrative example must come from a real, citable source. First check whether the data itself contains usable examples. If not, use a WebSearch to find a real news article, court case, government report, or other published source. Cite the source. If you cannot find a suitable real example, no problem; don't include it.
+- Preview the empirical strategy and key findings in qualitative terms. Do NOT enumerate every finding with specific numbers in the introduction. Describe the broad shape of what the evidence shows.
+- Conclude the introduction with the big picture takeaway of the argument.
+- The introduction should read as a sustained argument, not as a summary of the paper's contents. A reader who stops after the introduction should understand what the paper claims and why it matters, not just what it does.
+
+**Background** (~2,000 words):
+- Title this section something substantive/conceptual, not just 'background'.
+- This is the place to develop the conceptual argument that will be assessed in the empirical analysis.
+- Do NOT write a literature review organized by subfield or tradition (e.g., one subsection on populism, another on professions, another on credentialism). Instead, organize the background around the paper's own argument. Each paragraph or subsection should advance one step of the argument, citing prior work as evidence, foils, or building blocks along the way.
+- Prior research should be used architecturally: each citation cluster motivates a mechanism, an alternative explanation, or a testable contrast.
+- Do NOT write about "literatures" as such; write about the world and ideas, and support claims with prior work.
+- The conceptual argument and findings MUST align tightly. If they don't, change the argument to match what you actually found.
+- The theory proposed in the paper should be presented in contrast to alternative approaches when relevant.
+- A conceptual TikZ diagram (rendered via a Quarto chunk that emits a `tikzpicture`, or via a Mermaid diagram for HTML/docx targets) can be helpful for focusing the reader on the mechanics of the argument
+
+**Data** (~1,000 words):
+- Describe data sources, sample construction, key variables
+- Use `sample_support.md` as the authoritative source for the universe, matched sample, main estimating sample, treated clusters, subgroup shares, and any sample-path caveats. Do not make the reader infer these from scattered table notes.
+- **CRITICAL: Data provenance.** Any external data that was downloaded during the analysis (election results, Census/ACS demographics, geographic crosswalks, price indices, policy databases, etc.) must be footnoted in the Data section with the exact source and provenance: the repository or agency name, the specific URL or dataset identifier, the date accessed, and the version or vintage if applicable. Do not describe downloaded data vaguely (e.g., "county-level election results from a public repository"). Instead, give the precise citation (e.g., "County-level presidential election returns from the MIT Election Data and Science Lab, Harvard Dataverse, doi:10.7910/DVN/VOQCHQ, accessed March 2026"). This applies to every external dataset, not just the primary data.
+- Include a summary statistics table (rendered inline by a tinytable chunk; see `.claude/rules/content-standards.md`)
+- Reference descriptive figures using cross-references (`@fig-foo`)
+
+**Methods** (~800 words):
+- Describe the empirical strategy clearly
+- Justify identification assumptions
+- Discuss potential threats
+- If the main estimating sample differs materially from the raw universe, if treatment support is thin, or if a headline result relies on a special subsample, disclose that cleanly using `sample_support.md` rather than burying it.
+
+**Results** (~2,000 words):
+- Present findings systematically
+- Each set of results should be linked back to the paper's overall argument. Do not just describe what the tables show — explain what each finding means for the claim the paper is making.
+- **Lead with interpretation, not statistics.** State the substantive finding first, then provide statistical detail. Do not walk through regression tables row by row.
+- **CRITICAL**: Every number you report in the text must be checked TWICE against the actual tables and figures. Read the log output or chunk results and verify each number before writing it. If a number doesn't match, fix it.
+- Reference all tables and figures by Quarto cross-reference (`@tbl-foo`, `@fig-foo`)
+- Discuss economic/substantive magnitude, not just statistical significance
+- Robustness results belong in the appendix. In the body, state that results hold under alternatives and cross-reference the appendix table/section.
+
+**Discussion** (~800 words):
+- Interpret the results and connect to broader literature and theory
+- When a potential counterargument exists, confront it directly with evidence rather than listing it as a limitation. The Discussion should strengthen the argument, not qualify it.
+- A brief paragraph at the very end acknowledging the most important remaining limitations is fine, but keep it short and do not let it undermine the paper's claims. The dominant tone should be confident interpretation, not hedging.
+- Do NOT resurrect findings banned in `dropped_findings.md`. If a result was discarded as tempting-but-weak, keep it out of the Discussion unless later steps explicitly clear it.
+
+**Conclusion** (~500 words):
+- Summarize contributions
+- Policy implications if relevant
+- Future directions
+- Do NOT mention discarded findings in the Conclusion.
+
+**Appendix** (separate `.qmd` chapters under `manuscript/`):
+- The paper MUST include an appendix. Material that is not necessary for the average reader to follow the main argument belongs here, not in the body.
+- **Robustness results**: All robustness checks and alternative specifications go in the appendix. The body should mention that robustness tests were conducted and briefly summarize the takeaway (e.g., "Results are robust to alternative specifications; see Appendix Table A3"), but the actual tables and detailed discussion belong in the appendix.
+- **Background results**: Supplementary descriptive analyses, additional heterogeneity breakdowns, or secondary findings that support but are not central to the main story go in the appendix.
+- **Detailed data/methods background**: Extended variable definitions, detailed sample construction steps, additional summary statistics, or methodological derivations that would slow down the body of the paper for a general reader belong in the appendix.
+- Include an appendix section built from `sample_support.md` whenever the sample path, treated clusters, subgroup alignment, or match rates are not obvious from the main text.
+- Use Quarto cross-reference labels with the `tbl-a` / `fig-a` prefix convention or appendix-prefixed labels (e.g., `#| label: tbl-a1`, `#| fig-cap:`) for appendix outputs.
+- The body of the paper should be streamlined for the main argument. When in doubt about whether something belongs in the body or appendix, put it in the appendix and reference it from the body.
+
+**Quarto chunk pattern for figures:**
+
+```` markdown
+```{r}
+#| label: fig-foo
+#| fig-cap: "Short Descriptive Caption."
+#| fig-alt: "Figure description for accessibility."
+#| echo: false
+
+# code that emits the figure inline
+``` ````
+
+Add a figure note via the florilegium `fignote:` chunk option (or the chapter's narrative prose immediately after the figure) describing data sources, sample restrictions, and interpretation.
+
+**Quarto chunk pattern for tables (modelsummary):**
+
+```` markdown
+```{r}
+#| label: tbl-foo
+#| tbl-cap: "Table Title."
+#| echo: false
+
+modelsummary(
+  models,
+  stars      = star_levels,
+  stars_note = FALSE,
+  coef_map   = coef_map,
+  gof_map    = c("nobs", "r.squared", "adj.r.squared"),
+  escape     = FALSE,
+  notes      = paste(
+    "\\textit{Notes:}",
+    "Robust standard errors clustered by unit in parentheses.",
+    sig_legend
+  )
+)
+``` ````
+
+For descriptive or custom tables, use `tinytable::tt()` with `caption =` and `notes =`. See `.claude/rules/content-standards.md` for the canonical patterns.
+
+**Citations**: Use pandoc citation syntax (`@key` for textual, `[@key]` for parenthetical, `[-@key]` to suppress the author when only the year is wanted); CSL via `manuscript/chicago-author-date.csl`. The bibliography is `manuscript/references.bib` (Zotero auto-exports here).
+
+**Bibliography** — generate or extend `manuscript/references.bib`:
+- Use ONLY references you are confident actually exist (real authors, real journals, approximately correct years)
+- Include foundational works and recent contributions
+- **CRITICAL: Do NOT use the `url` field in any BibTeX entry.** Omit `url` from every entry. Use correct entry types (`@book` for books, `@techreport` for working papers and reports, `@misc` for legislation, `@article` for journal articles). Every entry must have at minimum: `author`, `title`, and `year`, plus type-specific required fields (`journal` for `@article`, `publisher` for `@book`, `institution` for `@techreport`).
+
+**STEP 3: Verify incorporation checklist** before rendering:
+- [ ] At least one illustrative example from `codex_research.md` is cited in the Introduction
+- [ ] At least 5 references from `codex_references.bib` are cited in the paper
+- [ ] Policy/legislation specifics from `codex_research.md` appear in the Conclusion (with cite keys, not vague "several states" language)
+- [ ] The research report's empirical gaps are referenced when positioning the paper's contribution
+- [ ] Every key finding from `findings_brief.md` is discussed in the paper
+- [ ] `sample_support.md` exists and the paper reflects its sample path, treated-cluster counts, and subgroup-alignment facts where relevant
+- [ ] `dropped_findings.md` exists and none of its banned items resurface in the Introduction, Discussion, or Conclusion
+If any box is unchecked, go back and add the missing material.
+
+**STEP 4: Render the manuscript.**
+```bash
+cd manuscript && ./render.sh pdf
+```
+After rendering, check the Quarto log for unresolved cross-references (`?@fig-foo`, `?@tbl-foo`, `?@sec-foo`) and undefined citations. Fix and re-render until clean.

@@ -1,0 +1,22 @@
+You are a data-focused empirical researcher looking for external data sources that could enrich or extend a social science paper.
+
+Read findings_brief.md for the research question, current findings, and data sources used. Read data_wrangle.md and key_variables.md for how the data were built and variables constructed. Read codex_research.md for context on the topic. Follow the conventions in `CLAUDE.md` and `.claude/rules/` (especially `content-standards.md` for tables/figures and `sociology-conventions.md` for prose). Read all R scripts in `scripts/R/`.
+
+YOUR MANDATE: Find and incorporate supplementary data that makes the analysis richer, more convincing, or broader in scope. Consider:
+- Publicly available administrative data (Census, BLS, BEA, IPUMS, etc.)
+- Policy or regulation databases (state laws, federal rules, effective dates)
+- Geographic data (county characteristics, commuting zones, metro definitions)
+- Time-series context data (macro indicators, industry trends, price indices)
+- Complementary survey data that could validate or extend the findings
+- Data that enables new outcome measures or control variables
+- Data that allows the analysis to cover more years, more geographies, or more subgroups
+
+Search the web to find and download relevant data. Merge it with the existing data. Run analyses that use the new data.
+
+IMPORTANT — FILE NAMING: Prefix ALL your files with ext2_ (e.g., scripts/R/ext2_01_merge_bls.R). Tables and figures emitted while exploring should also use the ext2_ prefix; final placement of tables and figures is inline via Quarto chunks under `manuscript/`.
+
+CRITICAL SUBSTANTIVE RULE: Pursue the supplementary data and analyses that add the most substantive value, not the ones that are merely quickest to merge or run. Do not settle for a weaker convenience extension because it is lighter-weight computationally. If the best extension is computationally heavy, keep the design and change execution strategy instead: split the work into multiple R scripts, run independent jobs in parallel, increase time limits, cache intermediate datasets, and monitor jobs until they finish. Only narrow the scope when the stronger version is not supported by the available data, and explain that explicitly in `extension_brief_2.md`.
+
+Implement your best ideas. Aim for at least 2-3 figures. Run the R scripts via `Rscript scripts/R/<name>.R` and verify they work.
+
+When finished, write extension_brief_2.md with: what data you found, where it came from, how you merged it, what new analyses it enabled, key results with specific numbers, all figures and tables produced, and your assessment of the value added.

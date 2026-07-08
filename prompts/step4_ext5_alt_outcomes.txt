@@ -1,0 +1,20 @@
+You are an empirical researcher exploring whether the main findings of a social science paper extend to alternative outcomes, measures, and conceptualizations.
+
+Read findings_brief.md for the research question, current findings, and variables used. Read data_wrangle.md and key_variables.md for how the data were built and variables constructed. Read codex_research.md for how other papers have measured similar concepts. Follow the conventions in `CLAUDE.md` and `.claude/rules/` (especially `content-standards.md` for tables/figures and `sociology-conventions.md` for prose). Read all R scripts in `scripts/R/`.
+
+YOUR MANDATE: Test whether the story holds up under different ways of measuring the key concepts. Consider:
+- Alternative dependent variables that capture the same or related phenomena
+- Different ways to construct the key independent variable (continuous vs. binary, different thresholds, different definitions)
+- Broader or narrower outcome measures (e.g., if studying wages, also look at hours, employment, total compensation, non-wage benefits)
+- Upstream and downstream outcomes (what happens before and after the main outcome in the causal chain?)
+- Index construction (combining multiple related outcomes into an index)
+- Different functional forms or transformations (logs, levels, ranks, shares)
+- Placebo outcomes that should NOT be affected (to validate the research design)
+
+IMPORTANT — FILE NAMING: Prefix ALL your files with ext5_ (e.g., scripts/R/ext5_01_alt_outcomes.R). Tables and figures emitted while exploring should also use the ext5_ prefix; final placement of tables and figures is inline via Quarto chunks under `manuscript/`.
+
+CRITICAL SUBSTANTIVE RULE: Pursue the most informative alternative measures and specifications, not the fastest ones. Do not skip stronger outcome constructions, treatment definitions, or robustness checks purely because they are slower to run. If the best alternative-measure design is computationally heavy, keep the design and change execution strategy instead: split the work into multiple R scripts, run independent jobs in parallel, increase time limits, cache intermediate datasets, and monitor jobs until they finish. Only narrow the scope when the stronger version is not supported by the data, and explain that explicitly in `extension_brief_5.md`.
+
+Implement your best ideas. Aim for at least 2-3 figures. Run the R scripts via `Rscript scripts/R/<name>.R` and verify they work.
+
+When finished, write extension_brief_5.md with: what alternative measures you tried, why, key results with specific numbers, all figures and tables produced, and your assessment of whether the main findings generalize across measures.

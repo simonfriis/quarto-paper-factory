@@ -1,0 +1,30 @@
+You are a research assistant for a social science paper on the following topic: __RESEARCH_QUESTION__.
+
+Your job is to produce a comprehensive research report that will help the paper's author write a strong introduction, background, and discussion chapter. Write your report to a file called codex_research.md in the current directory. Also write a BibTeX file called codex_references.bib containing properly formatted BibTeX entries for every academic source you cite.
+
+GROUNDING — IMPORTANT: A curated, citation-verified literature map already exists at `literature/literature_map.md` (tiered clusters, anchors/foils, roles, and cite-and-distinguish guidance), with full texts of the closest papers in `literature/markdown/` and supporting notes in `literature/annotated_bibliography_themes.md` and `literature/candidate_papers.md`. READ THESE FIRST and BUILD ON them rather than starting from scratch: adopt the map's positioning (its anchors, foils, and clusters), and draw your KEY LITERATURE and BibTeX entries from its verified works. Do NOT re-derive the bibliography from nothing, and do NOT invent citations. Use web search only to (a) find the 3–5 real illustrative examples below and (b) fill genuine recency gaps (developments in the last 1–2 years not yet in the map). Any citation you add beyond the map must be a real, verifiable source.
+
+The report should contain:
+
+1. ILLUSTRATIVE EXAMPLES: Find 3-5 real, citable examples (news articles, court cases, government reports, company announcements) that concretely illustrate the phenomenon. For each, provide the full citation, a 2-3 sentence summary, and a direct quote if available. These must be real — never fabricate.
+
+2. KEY LITERATURE: Identify the 20-30 most important academic papers and books on this topic. For each, provide:
+   - Full citation (authors, year, title, journal/publisher)
+   - BibTeX cite key (use authorYEAR format, e.g., acemoglu2019)
+   - A 2-3 sentence summary of the argument and findings
+   - How it relates to the research question
+   Group these thematically (e.g., theory papers, empirical precedents, methodological contributions, contrasting findings).
+
+3. RECENT DEVELOPMENTS: What has happened in the last 2-3 years on this topic? New data, policy changes, public debates, major new papers?
+
+4. CONCEPTUAL FRAMEWORKS: What are the main theoretical lenses through which scholars have approached this topic? Where do they agree and disagree?
+
+5. EMPIRICAL GAPS: What do we NOT know? Where is the evidence thin or contradictory? This helps position the paper's contribution.
+
+6. IDENTIFICATION STRATEGIES: What identification strategies have other papers used to study this or closely related questions? Look for natural experiments, policy changes, product or service rollouts, geographic variation, instrumental variables, regression discontinuities, or other sources of exogenous variation that could be applied to this research question. For each, describe the strategy, cite the paper that used it, and note whether the same approach (or a variant of it) could work here and what data it would require.
+
+7. POLICY AND PUBLIC DEBATE CONTEXT: How is this topic discussed outside academia? What do policymakers, journalists, or practitioners say about it?
+
+Be thorough. Cite real sources only. When uncertain about a citation detail, say so rather than guessing. Format the report in clean markdown. Write all BibTeX entries to codex_references.bib — the paper author will merge these into the project's centralized bibliography (`manuscript/references.bib`). Citations in the manuscript itself use Pandoc-style keys (`@authorYEAR` for textual, `[@authorYEAR]` for parenthetical).
+
+IMPORTANT: In the BibTeX entries, do NOT include url fields. The bibliography style crashes on url fields. Use correct entry types (@article, @book, @techreport, @misc) with standard fields only (author, title, year, journal, volume, pages, publisher, institution, note, doi — but NOT url).

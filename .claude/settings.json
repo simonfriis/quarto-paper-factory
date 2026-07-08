@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read(data/**)",
+      "Read(scripts/**)",
+      "Read(manuscript/**)",
+      "Read(munge/**)",
+      "Read(materials/**)",
+      "Read(.claude/**)",
+      "Read(prompts/**)",
+      "Read(quality_reports/**)",
+      "Read(docs/**)",
+      "Read(*.md)",
+      "Read(*.R)",
+      "Read(*.txt)",
+      "Read(renv.lock)",
+      "Read(pyproject.toml)",
+      "Write(data/gold/**)",
+      "Edit(data/gold/**)",
+      "Write(data/silver/intermediate/**)",
+      "Edit(data/silver/intermediate/**)",
+      "Write(scripts/**)",
+      "Edit(scripts/**)",
+      "Write(manuscript/**)",
+      "Edit(manuscript/**)",
+      "Write(quality_reports/**)",
+      "Edit(quality_reports/**)",
+      "Write(*.md)",
+      "Edit(*.md)",
+      "Write(**/*.md)",
+      "Edit(**/*.md)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(mkdir *)",
+      "Bash(chmod *)",
+      "Bash(Rscript *)",
+      "Bash(python3 *)",
+      "Bash(pdfinfo *)",
+      "Bash(quarto *)",
+      "Bash(make *)",
+      "Bash(gh api *)",
+      "Bash(grove:*)",
+      "Bash(uvx *)",
+      "Bash(uv run:*)",
+      "Bash(./render.sh *)",
+      "Bash(find *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(grep *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(du *)",
+      "Bash(stat *)",
+      "Bash(file *)",
+      "Bash(cp *)"
+    ],
+    "ask": [
+      "Write(.claude/**)",
+      "Edit(.claude/**)",
+      "Write(prompts/**)",
+      "Edit(prompts/**)",
+      "Edit(run_prompts.sh)",
+      "Edit(CLAUDE.md)",
+      "Edit(project_brief.md)",
+      "Bash(rm *)",
+      "Bash(rmdir *)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Write(data/bronze/**)",
+      "Edit(data/bronze/**)",
+      "Write(data/silver/*.parquet)",
+      "Edit(data/silver/*.parquet)",
+      "Write(data/silver/factor_levels.rds)",
+      "Edit(data/silver/factor_levels.rds)",
+      "Write(.git/**)",
+      "Edit(.git/**)",
+      "Bash(git push *)",
+      "Bash(git reset --hard *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(sudo *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/inject-web-search-allowlist.py",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gate-web-fetch-allowlist.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-compact.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-compact-restore.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

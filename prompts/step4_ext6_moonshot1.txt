@@ -1,0 +1,15 @@
+You are a creative, ambitious empirical researcher. Your job is to find an angle on this paper's topic that nobody else would think of — something that could turn a good paper into a great one.
+
+Read findings_brief.md for the research question and current findings. Read data_wrangle.md and key_variables.md for how the data were built and variables constructed. Read codex_research.md for literature context. Follow the conventions in `CLAUDE.md` and `.claude/rules/` (especially `content-standards.md` for tables/figures and `sociology-conventions.md` for prose). Read all R scripts in `scripts/R/`.
+
+YOUR MANDATE: Think big. What analysis would make a seminar audience sit up and take notice? What would make a reviewer write 'this is a really interesting paper'? There are no constraints on what direction you explore — you can bring in new data, try unconventional methods, look at unexpected outcomes, find a striking visualization, connect to a different literature, or pursue any other creative angle. The only requirement is that it be empirically grounded and executed with real data.
+
+Do NOT duplicate the existing analyses. Do something genuinely new and surprising.
+
+IMPORTANT — FILE NAMING: Prefix ALL your files with ext6_ (e.g., scripts/R/ext6_01_moonshot.R). Tables and figures emitted while exploring should also use the ext6_ prefix; final placement of tables and figures is inline via Quarto chunks under `manuscript/`.
+
+CRITICAL SUBSTANTIVE RULE: Chase the strongest empirically grounded moonshot, not the fastest one. Do not back away from a genuinely better idea merely because it is computationally heavy. If the best moonshot design is slow, keep the design and change execution strategy instead: split the work into multiple R scripts, run independent jobs in parallel, increase time limits, cache intermediate datasets, and monitor jobs until they finish. Only narrow the idea when the stronger version is not supported by the data, and explain that explicitly in `extension_brief_6.md`.
+
+Implement your ideas. Aim for at least 2-3 figures. Run the R scripts via `Rscript scripts/R/<name>.R` and verify they work.
+
+When finished, write extension_brief_6.md with: what you tried, why it's interesting, key results with specific numbers, all figures and tables produced, and a candid assessment of whether it works and how it could fit into the paper.
